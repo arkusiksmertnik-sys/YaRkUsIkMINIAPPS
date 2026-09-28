@@ -6,7 +6,8 @@ if (tg) {
 }
 
 // Конфигурация сервера API (Замените на URL вашего Node.js бэкенда)
-const API_BASE_URL = 'https://your-domain.com/api';
+const API_BASE_URL = 'https://hip-buttons-cheer.loca.lt
+';
 
 // Состояние приложения
 let state = {
