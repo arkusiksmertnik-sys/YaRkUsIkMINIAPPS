@@ -1,233 +1,192 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>YaRkUsIk Mini App — Crimson Glass Edition</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="style.css?v=3">
-    <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>YaRkUsIk / YKSI</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- Фоновые глубокие красные рубиновые пятна -->
-    <div class="background-blobs">
-        <div class="blob blob-1"></div>
-        <div class="blob blob-2"></div>
-        <div class="blob blob-3"></div>
+
+  <!-- ВЕРХНЯЯ ШАПКА -->
+  <header class="app-header">
+    <div class="user-pill" onclick="showScreen('screen-profile')">
+      <span class="user-avatar" id="header-avatar">👤</span>
+      <span class="user-name" id="header-username">Загрузка...</span>
     </div>
+    <div class="balance-badge" onclick="showScreen('screen-earn')">
+      <span>🟡 <strong id="header-balance">0</strong> UX Gold</span>
+    </div>
+  </header>
 
-    <div class="app-container">
-        <!-- Шапка Профиля -->
-        <header class="glass-header">
-            <div class="profile-info">
-                <div class="avatar-glow">
-                    <img id="user-avatar" src="https://via.placeholder.com/100/1c0508/ff2a55?text=Y" alt="Avatar">
-                </div>
-                <div>
-                    <div class="title-with-badge">
-                        <h1 id="user-name">Гость</h1>
-                        <span id="verified-badge" class="blue-badge" style="display: none;" title="Подтвержденный профиль YaRkUsIk">✓</span>
-                    </div>
-                    <span class="badge" id="role-badge">Слушатель</span>
-                </div>
-            </div>
-            <button id="admin-badge" class="admin-btn-trigger" style="display: none;" onclick="openAdminModal()">
-                ⚡ Админка
-            </button>
-        </header>
+  <!-- КОНТЕЙНЕР ЭКРАНОВ -->
+  <main class="content-container">
 
-        <!-- Поисковая строка -->
-        <div class="search-box glass-card">
-            <span class="search-icon">🔍</span>
-            <input type="text" id="search-input" placeholder="Поиск по трекам и новостям..." oninput="handleSearch()">
+    <!-- 1. ГЛАВНОЕ МЕНЮ (МЕАН) -->
+    <section id="screen-main" class="screen active">
+      <div class="hero-card glass-card">
+        <h1>YaRkUsIk / YKSI</h1>
+        <p>Официальный Mini App артиста</p>
+      </div>
+
+      <div class="menu-grid">
+        <button class="menu-btn glass-card" onclick="showScreen('screen-music')">
+          <span class="btn-icon">🎵</span>
+          <span>Музыка и Релизы</span>
+        </button>
+        <button class="menu-btn glass-card" onclick="showScreen('screen-news')">
+          <span class="btn-icon">📰</span>
+          <span>Новости</span>
+        </button>
+        <button class="menu-btn glass-card" onclick="showScreen('screen-earn')">
+          <span class="btn-icon">💰</span>
+          <span>Заработать UX Gold</span>
+        </button>
+        <button class="menu-btn glass-card" onclick="showScreen('screen-shop')">
+          <span class="btn-icon">🛒</span>
+          <span>Магазин</span>
+        </button>
+        <button class="menu-btn glass-card" onclick="showScreen('screen-tap')">
+          <span class="btn-icon">⚡</span>
+          <span>YKSI-Tap (Кликер)</span>
+        </button>
+        <button class="menu-btn glass-card" onclick="showScreen('screen-profile')">
+          <span class="btn-icon">👤</span>
+          <span>Профиль и Конвертер</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- 2. ЭКРАН МУЗЫКИ -->
+    <section id="screen-music" class="screen">
+      <div class="screen-header">
+        <button class="btn-back" onclick="showScreen('screen-main')">← Назад</button>
+        <h2>Музыка & Релизы</h2>
+        <div></div>
+      </div>
+      <div id="tracks-list" class="cards-list">
+        <!-- Треки загрузятся авто-скриптом -->
+      </div>
+    </section>
+
+    <!-- 3. ЭКРАН НОВОСТЕЙ -->
+    <section id="screen-news" class="screen">
+      <div class="screen-header">
+        <button class="btn-back" onclick="showScreen('screen-main')">← Назад</button>
+        <h2>Новости & Анонсы</h2>
+        <div></div>
+      </div>
+      <div id="news-list" class="cards-list">
+        <!-- Новости загрузятся авто-скриптом -->
+      </div>
+    </section>
+
+    <!-- 4. ЭКРАН ЗАРАБОТАТЬ (ЗАДАНИЯ) -->
+    <section id="screen-earn" class="screen">
+      <div class="screen-header">
+        <button class="btn-back" onclick="showScreen('screen-main')">← Назад</button>
+        <h2>Заработать UX Gold</h2>
+        <div></div>
+      </div>
+      <div class="glass-card info-card">
+        Выполняй задания ниже, чтобы зарабатывать **UX Gold** и обменивать их на бонусы!
+      </div>
+      <div id="tasks-list" class="cards-list">
+        <!-- Задания загрузятся авто-скриптом -->
+      </div>
+    </section>
+
+    <!-- 5. ЭКРАН МАГАЗИН (ЗАГЛУШКА) -->
+    <section id="screen-shop" class="screen">
+      <div class="screen-header">
+        <button class="btn-back" onclick="showScreen('screen-main')">← Назад</button>
+        <h2>Магазин Мерча</h2>
+        <div></div>
+      </div>
+      <div class="locked-section glass-card">
+        <div class="locked-blur-bg">
+          <div class="fake-item">👕 Худи YaRkUsIk Official — 10 000 Gold</div>
+          <div class="fake-item">🎟️ VIP-Билет на концерт — 25 000 Gold</div>
         </div>
-
-        <!-- ОСНОВНОЙ КОНТЕНТ (РАЗДЕЛЫ) -->
-
-        <!-- 1. Вкладка: Главная -->
-        <main id="tab-tracks" class="tab-content active">
-            <!-- Закрепленный последний пост из новостей -->
-            <div id="latest-news-banner" class="featured-news-card glass-card" style="display: none;">
-                <div class="featured-tag">📌 ПОСЛЕДНЯЯ НОВОСТЬ</div>
-                <div id="latest-news-content"></div>
-            </div>
-
-            <h2 class="section-title">🎵 Все релизы & Треки</h2>
-            <div id="tracks-list" class="cards-grid">
-                <div class="loading-spinner">Загрузка музыки...</div>
-            </div>
-        </main>
-
-        <!-- 2. Вкладка: Новости -->
-        <main id="tab-news" class="tab-content">
-            <h2 class="section-title">📰 Новости & Лента</h2>
-            <div id="news-list" class="news-grid">
-                <div class="loading-spinner">Загрузка новостей...</div>
-            </div>
-        </main>
-
-        <!-- 3. Вкладка: Пресейвы & Анонсы -->
-        <main id="tab-upcoming" class="tab-content">
-            <h2 class="section-title">🔥 Эксклюзивные Анонсы & Pre-Save</h2>
-            <div id="upcoming-list" class="cards-grid">
-                <div class="loading-spinner">Загрузка анонсов...</div>
-            </div>
-        </main>
-
-        <!-- 4. Вкладка: Личный Профиль / Информация -->
-        <main id="tab-info" class="tab-content">
-            <div class="glass-card info-card">
-                <div class="profile-hero">
-                    <img id="profile-hero-avatar" src="https://via.placeholder.com/100/1c0508/ff2a55?text=Y" class="hero-avatar">
-                    <h2 class="hero-name"><span id="profile-hero-name">Имя</span> <span id="hero-badge" class="blue-badge" style="display:none;">✓</span></h2>
-                    <p class="hero-sub" id="profile-hero-status">Слушатель</p>
-                </div>
-                
-                <div class="stats-grid">
-                    <div class="stat-item">
-                        <span class="stat-num" id="user-presaves-count">0</span>
-                        <span class="stat-label">Мои Pre-Save</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-num" id="total-tracks-count">0</span>
-                        <span class="stat-label">Всего треков</span>
-                    </div>
-                </div>
-
-                <div class="info-links">
-                    <a href="https://t.me/yarkusik" target="_blank" class="crimson-btn">💬 Официальный Telegram Канал</a>
-                </div>
-            </div>
-        </main>
-    </div>
-
-    <!-- Раздел Магазин -->
-<div id="screen-shop" class="screen">
-  <div class="screen-header">
-    <button class="btn-back" onclick="navigation.back()">← Назад</button>
-    <h2>Магазин</h2>
-    <div></div>
-  </div>
-
-  <div class="locked-section glass-card">
-    <!-- Фейковый блюрный контент -->
-    <div class="locked-blur-bg">
-      <div class="shop-item">Мерч Толстовка YKSI - 5000 Gold</div>
-      <div class="shop-item">Эксклюзивный Сниппет - 1500 Gold</div>
-    </div>
-    <!-- Наложение с замком -->
-    <div class="locked-overlay">
-      <div class="lock-icon">🔒</div>
-      <h3>В разработке</h3>
-      <p style="color: var(--text-muted)">Магазин откроется в ближайших обновлениях</p>
-    </div>
-  </div>
-</div>
-
-<!-- Раздел Кликер (YKSI-Tap) -->
-<div id="screen-clicker" class="screen">
-  <div class="screen-header">
-    <button class="btn-back" onclick="navigation.back()">← Назад</button>
-    <h2>YKSI-Tap</h2>
-    <div></div>
-  </div>
-
-  <div class="locked-section glass-card" style="min-height: 350px;">
-    <div class="locked-blur-bg" style="text-align: center; padding-top: 50px;">
-      <div style="width: 150px; height: 150px; background: red; border-radius: 50%; margin: 0 auto;"></div>
-    </div>
-    <div class="locked-overlay">
-      <div class="lock-icon">⚡</div>
-      <h3>Скоро запуск YKSI-Tap</h3>
-      <p style="color: var(--text-muted)">Готовьтесь майнить UX Gold кликами!</p>
-    </div>
-  </div>
-</div>
-
-    
-    <!-- НИЖНЯЯ ПЛАВАЮЩАЯ DOCK-ПАНЕЛЬ (Crimson Glass Dock) -->
-    <div class="dock-container">
-        <nav class="glass-dock">
-            <button class="dock-btn active" onclick="switchTab('tracks')">
-                <span class="dock-icon">🎵</span>
-                <span class="dock-label">Главная</span>
-            </button>
-            <button class="dock-btn" onclick="switchTab('news')">
-                <span class="dock-icon">📰</span>
-                <span class="dock-label">Новости</span>
-            </button>
-            <button class="dock-btn" onclick="switchTab('upcoming')">
-                <span class="dock-icon">🔥</span>
-                <span class="dock-label">Pre-Save</span>
-            </button>
-            <button class="dock-btn" onclick="switchTab('info')">
-                <span class="dock-icon">👤</span>
-                <span class="dock-label">Профиль</span>
-            </button>
-        </nav>
-    </div>
-
-    <!-- Модальное Окно Админки -->
-    <div id="admin-modal" class="glass-modal">
-        <div class="modal-content glass-card">
-            <div class="modal-header">
-                <h2>⚡ Админ-панель YaRkUsIk</h2>
-                <button class="close-btn" onclick="closeAdminModal()">✕</button>
-            </div>
-            
-            <div class="admin-tabs">
-                <button class="admin-tab-btn active" onclick="switchAdminTab('add-track')">+ Трек</button>
-                <button class="admin-tab-btn" onclick="switchAdminTab('add-news')">+ Новость</button>
-                <button class="admin-tab-btn" onclick="switchAdminTab('edit-likes')">❤️ Накрутка</button>
-            </div>
-
-            <!-- Форма добавления трека -->
-            <form id="form-track" class="admin-form active" onsubmit="handleTrackSubmit(event)">
-                <input type="text" id="track-title" placeholder="Название трека" required>
-                
-                <label class="file-upload-label">
-                    <span>🖼️ Загрузить обложку (с устройства):</span>
-                    <input type="file" id="track-cover-file" accept="image/*" onchange="convertFileToBase64(this, 'track-cover-data')">
-                    <input type="hidden" id="track-cover-data">
-                </label>
-
-                <label class="file-upload-label">
-                    <span>🎵 Загрузить MP3/Аудио (с устройства):</span>
-                    <input type="file" id="track-audio-file" accept="audio/*" onchange="convertFileToBase64(this, 'track-audio-data')">
-                    <input type="hidden" id="track-audio-data">
-                </label>
-
-                <input type="url" id="track-link" placeholder="Ссылка на стриминг (Apple Music / Yandex)">
-                <input type="text" id="track-date" placeholder="Дата релиза (напр: 20.10.2026)">
-                <input type="number" id="track-initial-likes" placeholder="Начальное количество лайков" value="0">
-                <label class="checkbox-label">
-                    <input type="checkbox" id="track-upcoming"> Сделать Анонсом / Сниппетом (Pre-Save)
-                </label>
-                <button type="submit" class="crimson-btn">Опубликовать от YaRkUsIk ☑️</button>
-            </form>
-
-            <!-- Форма добавления новостей -->
-            <form id="form-news" class="admin-form" onsubmit="handleNewsSubmit(event)">
-                <textarea id="news-text" placeholder="Текст новости..." rows="4" required></textarea>
-                <label class="file-upload-label">
-                    <span>🖼️ Картинка к новости (с устройства):</span>
-                    <input type="file" id="news-image-file" accept="image/*" onchange="convertFileToBase64(this, 'news-image-data')">
-                    <input type="hidden" id="news-image-data">
-                </label>
-                <button type="submit" class="crimson-btn">Опубликовать от YaRkUsIk ☑️</button>
-            </form>
-
-            <!-- Форма Накрутки/Изменения Лайков -->
-            <div id="form-likes" class="admin-form">
-                <p class="admin-hint">Выберите трек и укажите нужное количество лайков:</p>
-                <select id="boost-track-select" class="admin-select"></select>
-                <input type="number" id="boost-likes-count" placeholder="Новое кол-во лайков">
-                <button type="button" class="crimson-btn" onclick="applyLikesBoost()">Установить лайки 🔥</button>
-            </div>
+        <div class="locked-overlay">
+          <span class="lock-icon">🔒</span>
+          <h3>Раздел в разработке</h3>
+          <p>Магазин откроется в следующих обновлениях!</p>
         </div>
-    </div>
+      </div>
+    </section>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="app.js?v=3"></script>
+    <!-- 6. ЭКРАН КЛИКЕР (YKSI-TAP) -->
+    <section id="screen-tap" class="screen">
+      <div class="screen-header">
+        <button class="btn-back" onclick="showScreen('screen-main')">← Назад</button>
+        <h2>YKSI-Tap</h2>
+        <div></div>
+      </div>
+      <div class="locked-section glass-card" style="min-height: 320px;">
+        <div class="locked-blur-bg" style="text-align: center; padding-top: 40px;">
+          <div class="tap-circle-fake">⚡</div>
+        </div>
+        <div class="locked-overlay">
+          <span class="lock-icon">⚡</span>
+          <h3>Скоро запуск YKSI-Tap</h3>
+          <p>Готовься майнить UX Gold прямо кликами!</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. ЭКРАН ПРОФИЛЯ И КОНВЕРТЕРА -->
+    <section id="screen-profile" class="screen">
+      <div class="screen-header">
+        <button class="btn-back" onclick="showScreen('screen-main')">← Назад</button>
+        <h2>Профиль</h2>
+        <div></div>
+      </div>
+
+      <div class="glass-card profile-card">
+        <div class="profile-info">
+          <h3 id="prof-name">Пользователь</h3>
+          <p id="prof-id">ID: -</p>
+        </div>
+        <div class="balance-box">
+          <span>Твой баланс:</span>
+          <h2>🟡 <span id="prof-balance">0</span> UX Gold</h2>
+        </div>
+      </div>
+
+      <!-- Калькулятор валюты -->
+      <div class="glass-card converter-card">
+        <h3>🧮 Конвертер валют (UX Gold ⇄ RUB)</h3>
+        <p class="rate-label">Курс: 100 UX Gold = 1 Рубль</p>
+        
+        <div class="calc-row">
+          <input type="number" id="calc-gold" placeholder="UX Gold" oninput="convertFromGold()">
+          <span>⇄</span>
+          <input type="number" id="calc-rub" placeholder="Рубли (₽)" oninput="convertFromRub()">
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ПРОФЕССИОНАЛЬНЫЙ ПЛЕЕР (ВНИЗУ) -->
+  <div id="player-bar" class="player-bar hidden">
+    <div class="player-info">
+      <img id="player-cover" src="" alt="Cover">
+      <div class="player-text">
+        <div id="player-title" class="player-title">Название трека</div>
+        <div id="player-status" class="player-status">Воспроизведение...</div>
+      </div>
+      <button id="player-play-btn" class="btn-play-pause" onclick="togglePlayPause()">⏸</button>
+    </div>
+    <div class="progress-container" onclick="seekAudio(event)">
+      <div id="player-progress" class="progress-bar"></div>
+    </div>
+  </div>
+
+  <audio id="audio-element"></audio>
+  <script src="app.js"></script>
 </body>
 </html>
