@@ -3,208 +3,122 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ЯрКуСиК / YKSI — Official Mini App</title>
-    <!-- Telegram WebApp SDK -->
+    <title>YaRkUsIk Mini App</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        darkBg: '#0a0a0c',
-                        cardBg: 'rgba(22, 22, 28, 0.7)',
-                        accentRed: '#dc2626',
-                        accentBurgundy: '#881337',
-                        glowRed: 'rgba(220, 38, 38, 0.25)'
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        body {
-            background-color: #0a0a0c;
-            color: #f3f4f6;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .glass-card {
-            background: rgba(20, 20, 26, 0.65);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-        }
-        .glow-effect {
-            box-shadow: 0 0 20px rgba(220, 38, 38, 0.25);
-        }
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    </style>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body class="pb-24 hide-scrollbar">
-
-    <!-- Админ-панель (Видна только администратору) -->
-    <div id="admin-banner" class="hidden bg-accentBurgundy/40 border-b border-accentRed/30 px-4 py-2 text-xs flex justify-between items-center text-red-200">
-        <span>🛡 Панель Управления Проектом</span>
-        <button onclick="openAdminModal()" class="bg-accentRed px-3 py-1 rounded-md font-semibold text-white shadow-sm">Управлять</button>
+<body>
+    <div class="background-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
     </div>
 
-    <!-- Контейнер экранов -->
-    <main class="max-w-md mx-auto px-4 pt-4">
-
-        <!-- 1. ГЛАВНАЯ -->
-        <section id="tab-home" class="tab-content space-y-6">
-            <!-- Аватар и Шапка -->
-            <div class="text-center space-y-3 pt-2">
-                <div class="relative w-28 h-28 mx-auto rounded-full overflow-hidden border-2 border-accentRed/50 glow-effect">
-                    <img id="artist-avatar" src="https://via.placeholder.com/150/101014/dc2626?text=YKSI" alt="ЯрКуСиК / YKSI" class="w-full h-full object-cover">
+    <div class="app-container">
+        <!-- Шапка -->
+        <header class="glass-header">
+            <div class="profile-info">
+                <div class="avatar-glow">
+                    <img id="user-avatar" src="https://via.placeholder.com/100" alt="Avatar">
                 </div>
                 <div>
-                    <h1 class="text-2xl font-bold tracking-wide text-white">ЯрКуСиК / YKSI</h1>
-                    <p id="artist-bio" class="text-xs text-gray-400 mt-1 px-4">Официальное сообщество и релизы музыкального проекта.</p>
+                    <div class="title-with-badge">
+                        <h1 id="user-name">YaRkUsIk</h1>
+                        <span class="blue-badge" title="Подтвержденный профиль">✓</span>
+                    </div>
+                    <span class="badge" id="role-badge">Official Artist</span>
                 </div>
             </div>
-
-            <!-- Блок "Новый релиз" -->
-            <div id="latest-release-block" class="glass-card rounded-2xl p-4 relative overflow-hidden">
-                <div class="text-xs font-semibold uppercase tracking-wider text-accentRed mb-2 flex items-center gap-1">
-                    <span class="w-2 h-2 rounded-full bg-accentRed animate-pulse"></span> Новый релиз
-                </div>
-                <div id="latest-release-content">
-                    <p class="text-sm text-gray-400">Релизы пока не добавлены.</p>
-                </div>
-            </div>
-
-            <!-- Лента свежих новостей (Превью) -->
-            <div class="space-y-3">
-                <div class="flex justify-between items-center">
-                    <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-400">Свежее</h2>
-                    <button onclick="switchTab('news')" class="text-xs text-accentRed hover:underline">Все новости &rarr;</button>
-                </div>
-                <div id="home-news-feed" class="space-y-3">
-                    <p class="text-xs text-gray-500">Нет публикаций.</p>
-                </div>
-            </div>
-
-            <!-- Кнопка перехода к музыке -->
-            <button onclick="switchTab('music')" class="w-full py-3.5 bg-gradient-to-r from-accentBurgundy to-accentRed rounded-xl font-medium text-sm text-white shadow-lg glow-effect flex items-center justify-center gap-2">
-                🎵 Перейти к музыке
+            <button id="admin-badge" class="admin-btn-trigger" style="display: none;" onclick="openAdminModal()">
+                ⚡ Админка
             </button>
-        </section>
+        </header>
 
-        <!-- 2. МУЗЫКА -->
-        <section id="tab-music" class="tab-content hidden space-y-4">
-            <h2 class="text-lg font-bold text-white mb-2">Дискография и треки</h2>
-            <div id="music-list" class="space-y-4">
-                <p class="text-xs text-gray-500">Треки ещё не загружены.</p>
-            </div>
-        </section>
-
-        <!-- 3. НОВОСТИ -->
-        <section id="tab-news" class="tab-content hidden space-y-4">
-            <h2 class="text-lg font-bold text-white mb-2">Новости и анонсы</h2>
-            <div id="news-list" class="space-y-4">
-                <p class="text-xs text-gray-500">Список новостей пуст.</p>
-            </div>
-        </section>
-
-        <!-- 4. ИЗБРАННОЕ -->
-        <section id="tab-favorites" class="tab-content hidden space-y-4">
-            <h2 class="text-lg font-bold text-white mb-2">Избранное</h2>
-            <div id="favorites-list" class="space-y-3">
-                <p class="text-xs text-gray-500">Вы ещё ничего не добавили в избранное.</p>
-            </div>
-        </section>
-
-        <!-- 5. ПРОФИЛЬ -->
-        <section id="tab-profile" class="tab-content hidden space-y-5">
-            <div class="glass-card rounded-2xl p-5 text-center space-y-3">
-                <img id="user-avatar" src="https://via.placeholder.com/100/101014/ffffff?text=User" class="w-20 h-20 mx-auto rounded-full border border-gray-700">
-                <div>
-                    <h3 id="user-name" class="font-bold text-white">Гость</h3>
-                    <p id="user-username" class="text-xs text-gray-400">@telegram</p>
-                </div>
-            </div>
-
-            <div class="glass-card rounded-2xl p-4 space-y-3">
-                <h4 class="text-xs font-semibold uppercase text-gray-400">Настройки и каналы</h4>
-                <a id="channel-link" href="#" target="_blank" class="flex justify-between items-center py-2 text-sm text-gray-200 border-b border-gray-800">
-                    <span>Официальный канал</span>
-                    <span class="text-xs text-accentRed">Открыть &rarr;</span>
-                </a>
-                <div class="flex justify-between items-center py-2 text-sm text-gray-200">
-                    <span>Уведомления</span>
-                    <input type="checkbox" id="notif-toggle" class="accent-accentRed" checked>
-                </div>
-            </div>
-        </section>
-
-    </main>
-
-    <!-- Нижняя закреплённая навигация -->
-    <nav class="fixed bottom-0 left-0 right-0 glass-card border-t border-gray-800/80 px-2 py-2 z-40">
-        <div class="max-w-md mx-auto flex justify-around items-center">
-            <button onclick="switchTab('home')" id="nav-home" class="nav-btn text-accentRed flex flex-col items-center gap-1 text-[10px]">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-                <span>Главная</span>
-            </button>
-            <button onclick="switchTab('music')" id="nav-music" class="nav-btn text-gray-400 flex flex-col items-center gap-1 text-[10px]">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-2v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 .895-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 .895-2 3-2 3 .895 3 2zM9 10l12-2"/></svg>
-                <span>Музыка</span>
-            </button>
-            <button onclick="switchTab('news')" id="nav-news" class="nav-btn text-gray-400 flex flex-col items-center gap-1 text-[10px]">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/></svg>
-                <span>Новости</span>
-            </button>
-            <button onclick="switchTab('favorites')" id="nav-favorites" class="nav-btn text-gray-400 flex flex-col items-center gap-1 text-[10px]">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-                <span>Избранное</span>
-            </button>
-            <button onclick="switchTab('profile')" id="nav-profile" class="nav-btn text-gray-400 flex flex-col items-center gap-1 text-[10px]">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                <span>Профиль</span>
-            </button>
+        <!-- Поиск -->
+        <div class="search-box glass-card">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="search-input" placeholder="Поиск треков и релизов..." oninput="handleSearch()">
         </div>
-    </nav>
 
-    <!-- Модальное окно Администратора -->
-    <div id="admin-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden p-4 overflow-y-auto">
-        <div class="glass-card rounded-2xl p-5 max-w-md mx-auto space-y-4 my-8">
-            <div class="flex justify-between items-center border-b border-gray-800 pb-3">
-                <h3 class="font-bold text-white">Управление контентом</h3>
-                <button onclick="closeAdminModal()" class="text-gray-400 text-xl">&times;</button>
+        <!-- Переключатель Вкладок -->
+        <nav class="glass-tabs">
+            <button class="tab-btn active" onclick="switchTab('tracks')">🎵 Треки</button>
+            <button class="tab-btn" onclick="switchTab('news')">📰 Новости</button>
+            <button class="tab-btn" onclick="switchTab('stats')">📊 Инфо</button>
+        </nav>
+
+        <!-- Вкладка: Треки -->
+        <main id="tab-tracks" class="tab-content active">
+            <div id="tracks-list" class="cards-grid">
+                <div class="loading-spinner">Загрузка музыкального мира...</div>
+            </div>
+        </main>
+
+        <!-- Вкладка: Новости -->
+        <main id="tab-news" class="tab-content">
+            <div id="news-list" class="news-grid">
+                <div class="loading-spinner">Загрузка свежих новостей...</div>
+            </div>
+        </main>
+
+        <!-- Вкладка: Статистика -->
+        <main id="tab-stats" class="tab-content">
+            <div class="glass-card stats-card">
+                <h2>📈 Аналитика карточки</h2>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span class="stat-num" id="total-tracks-count">0</span>
+                        <span class="stat-label">Всего релизов</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-num" id="total-news-count">0</span>
+                        <span class="stat-label">Новостей</span>
+                    </div>
+                </div>
+                <div class="author-block">
+                    <p>Официальное приложение исполнителя <strong>YaRkUsIk</strong> <span class="blue-badge">✓</span></p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Модальное Окно Админ-Панели -->
+    <div id="admin-modal" class="glass-modal">
+        <div class="modal-content glass-card">
+            <div class="modal-header">
+                <h2>Управление контентом</h2>
+                <button class="close-btn" onclick="closeAdminModal()">✕</button>
+            </div>
+            
+            <div class="admin-tabs">
+                <button class="admin-tab-btn active" onclick="switchAdminTab('add-track')">+ Трек</button>
+                <button class="admin-tab-btn" onclick="switchAdminTab('add-news')">+ Новость</button>
             </div>
 
-            <!-- Добавление трека -->
-            <form id="add-track-form" onsubmit="handleCreateTrack(event)" class="space-y-3">
-                <h4 class="text-xs font-semibold text-accentRed uppercase">Добавить трек / релиз</h4>
-                <input type="text" id="track-title" placeholder="Название" required class="w-full bg-black/50 border border-gray-800 rounded-lg p-2.5 text-xs text-white">
-                <input type="url" id="track-cover" placeholder="URL обложки" required class="w-full bg-black/50 border border-gray-800 rounded-lg p-2.5 text-xs text-white">
-                <input type="url" id="track-audio" placeholder="URL демо-аудио (.mp3)" class="w-full bg-black/50 border border-gray-800 rounded-lg p-2.5 text-xs text-white">
-                <input type="url" id="track-link" placeholder="Ссылка на смартлинк / дистрибьютора" required class="w-full bg-black/50 border border-gray-800 rounded-lg p-2.5 text-xs text-white">
-                <input type="date" id="track-date" required class="w-full bg-black/50 border border-gray-800 rounded-lg p-2.5 text-xs text-white">
-                <label class="flex items-center gap-2 text-xs text-gray-300">
-                    <input type="checkbox" id="track-is-upcoming" class="accent-accentRed"> Готовящийся релиз (Предсохранение)
+            <!-- Форма Трека -->
+            <form id="form-track" class="admin-form active" onsubmit="handleTrackSubmit(event)">
+                <input type="text" id="track-title" placeholder="Название трека" required>
+                <input type="url" id="track-cover" placeholder="Ссылка на обложку (URL)" required>
+                <input type="url" id="track-audio" placeholder="Прямая ссылка на MP3/Аудио (необязательно)">
+                <input type="url" id="track-link" placeholder="Ссылка на Я.Музыку / VK / Стриминг">
+                <input type="text" id="track-date" placeholder="Дата релиза (например: 25.10.2026)">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="track-upcoming"> Это эксклюзивный сниппет
                 </label>
-                <button type="submit" class="w-full bg-accentRed py-2 rounded-lg text-xs font-semibold text-white">Сохранить релиз</button>
+                <button type="submit" class="apple-btn">Опубликовать трек от YaRkUsIk ☑️</button>
             </form>
 
-            <hr class="border-gray-800">
-
-            <!-- Добавление новости -->
-            <form id="add-news-form" onsubmit="handleCreateNews(event)" class="space-y-3">
-                <h4 class="text-xs font-semibold text-accentRed uppercase">Опубликовать новость</h4>
-                <textarea id="news-text" placeholder="Текст новости..." required class="w-full bg-black/50 border border-gray-800 rounded-lg p-2.5 text-xs text-white h-20"></textarea>
-                <input type="url" id="news-image" placeholder="URL изображения (необязательно)" class="w-full bg-black/50 border border-gray-800 rounded-lg p-2.5 text-xs text-white">
-                <button type="submit" class="w-full bg-accentRed py-2 rounded-lg text-xs font-semibold text-white">Опубликовать новость</button>
+            <!-- Форма Новостей -->
+            <form id="form-news" class="admin-form" onsubmit="handleNewsSubmit(event)">
+                <textarea id="news-text" placeholder="Текст новости..." rows="4" required></textarea>
+                <input type="url" id="news-image" placeholder="Ссылка на картинку (URL)">
+                <button type="submit" class="apple-btn">Опубликовать новость от YaRkUsIk ☑️</button>
             </form>
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="app.js"></script>
 </body>
 </html>
