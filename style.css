@@ -336,3 +336,127 @@ input, textarea, .admin-select { background: rgba(255, 255, 255, 0.06); border: 
 .checkbox-label { font-size: 12px; display: flex; align-items: center; gap: 8px; }
 .admin-hint { font-size: 12px; color: rgba(255, 255, 255, 0.6); margin-bottom: 6px; }
 .loading-spinner { text-align: center; padding: 30px; color: rgba(255, 255, 255, 0.5); }
+:root {
+  --bg-color: #0d0608;
+  --glass-bg: rgba(255, 0, 55, 0.07);
+  --glass-border: rgba(255, 50, 80, 0.25);
+  --neon-red: #ff0037;
+  --neon-glow: 0 0 15px rgba(255, 0, 55, 0.6);
+  --text-main: #ffffff;
+  --text-muted: #b3b3b3;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', Roboto, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+/* Glassmorphism Карточки */
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  padding: 16px;
+  margin-bottom: 15px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.glass-card:active {
+  transform: scale(0.98);
+}
+
+/* Кнопка с неон-эффектом */
+.btn-neon {
+  background: linear-gradient(135deg, #ff0037, #990021);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 20px;
+  font-weight: 600;
+  box-shadow: var(--neon-glow);
+  cursor: pointer;
+}
+
+/* Шапка с кнопкой Назад */
+.screen-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px;
+}
+
+.btn-back {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--glass-border);
+  color: #fff;
+  border-radius: 10px;
+  padding: 8px 14px;
+}
+
+/* Заблокированные разделы (Магазин / Кликер) */
+.locked-section {
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+  min-height: 250px;
+}
+
+.locked-blur-bg {
+  filter: blur(10px) brightness(0.4);
+  pointer-events: none;
+  user-select: none;
+}
+
+.locked-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+}
+
+.lock-icon {
+  font-size: 48px;
+  margin-bottom: 10px;
+  filter: drop-shadow(0 0 10px var(--neon-red));
+}
+
+/* Профессиональный Плеер */
+.player-bar {
+  position: fixed;
+  bottom: 20px;
+  left: 15px;
+  right: 15px;
+  background: rgba(20, 5, 10, 0.85);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--neon-red);
+  box-shadow: var(--neon-glow);
+  border-radius: 16px;
+  padding: 12px;
+}
+
+.progress-container {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  width: 0%;
+  background: var(--neon-red);
+  box-shadow: 0 0 8px var(--neon-red);
+  transition: width 0.1s linear;
+}
