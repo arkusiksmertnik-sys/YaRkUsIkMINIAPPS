@@ -338,3 +338,127 @@ document.addEventListener('DOMContentLoaded', () => {
     loadTracks();
     loadNews();
 });
+
+// Инициализация Telegram WebApp
+const tg = window.Telegram?.WebApp;
+tg?.expand();
+
+const USER_ID = tg?.initDataUnsafe?.user?.id || 123456789; // Запасной ID для тестов в браузере
+const USER_NAME = tg?.initDataUnsafe?.user?.first_name || 'Слушатель';
+
+// Конфигурация Supabase (Убедись, что клиент supabase инициализирован)
+// const supabase = supabase.createClient('URL', 'KEY');
+
+// 1. Форматирование чисел (1000 -> 1k, 1000000 -> 1M)
+function formatNumber(num) {
+  if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+  if (num >= 1000) return (num / 1000).toFixed(1) + 'k';
+  return num.toString();
+}
+
+// 2. Универсальная система лайков с защитой от повторного клика
+async function toggleLike(targetType, targetId, countElementId) {
+  try {
+    // Проверяем, ставил ли юзер уже лайк
+    const { data: existingLike } = await supabase
+      .from('likes')
+      .select('id')
+      .eq('telegram_id', USER_ID)
+      .eq('target_type', targetType)
+      .eq('target_id', targetId)
+      .single();
+
+    if (existingLike) {
+      // Пользователь уже лайкал -> Убираем лайк
+      await supabase.from('likes').delete().eq('id', existingLike.id);
+      await decrementCounter(targetType, targetId);
+    } else {
+      // Ставим лайк
+      await supabase.from('likes').insert([
+        { telegram_id: USER_ID, target_type: targetType, target_id: targetId }
+      ]);
+      await incrementCounter(targetType, targetId);
+    }
+
+    // Обновляем отображение
+    updateLikeUI(targetType, targetId, countElementId);
+  } catch (err) {
+    console.error('Ошибка лайка:', err);
+  }
+}
+
+// 3. Системный счетчик пресейвов
+async function handlePresave(trackId, btnElement) {
+  const { data: existing } = await supabase
+    .from('presaves_v2')
+    .select('id')
+    .eq('telegram_id', USER_ID)
+    .eq('track_id', trackId)
+    .single();
+
+  if (existing) {
+    tg?.showPopup({ title: 'Информация', message: 'Вы уже оформили пресейв на этот трек!' });
+    return;
+  }
+
+  await supabase.from('presaves_v2').insert([
+    { telegram_id: USER_ID, track_id: trackId }
+  ]);
+
+  btnElement.innerText = '✅ Сохранено';
+  btnElement.classList.add('disabled');
+  tg?.showPopup({ title: 'Успешно!', message: 'Трек появится у вас в день релиза!' });
+}
+
+// 4. Экономика UX Gold: Калькулятор Конвертер
+function convertCurrency(value, type) {
+  // Курс: 1 RUB = 100 UX Gold
+  if (type === 'rub_to_gold') {
+    return value * 100;
+  } else if (type === 'gold_to_rub') {
+    return (value / 100).toFixed(2);
+  }
+}
+
+// 5. Раздел «Заработать» — Модуль заданий
+const TASKS_CONFIG = [
+  { id: 'sub_main_channel', title: 'Подписка на ТГ-канал YaRkUsIk', reward: 500, link: 'https://t.me/yarkusik' },
+  { id: 'sub_chat', title: 'Вступить в оф. чат', reward: 300, link: 'https://t.me/yarkusik' }
+];
+
+async function checkAndRewardTask(taskId, rewardAmount, link) {
+  // Открываем ссылку
+  tg?.openTelegramLink(link);
+
+  // Проверяем, начислена ли уже награда
+  const { data: done } = await supabase
+    .from('completed_tasks')
+    .select('id')
+    .eq('telegram_id', USER_ID)
+    .eq('task_id', taskId)
+    .single();
+
+  if (done) {
+    tg?.showAlert('Вы уже получили награду за это задание!');
+    return;
+  }
+
+  // Фиксируем выполнение и начисляем баланс
+  await supabase.from('completed_tasks').insert([{ telegram_id: USER_ID, task_id: taskId }]);
+  await updateUserBalance(rewardAmount);
+
+  tg?.showAlert(`🎉 Начислено +${rewardAmount} UX Gold!`);
+}
+
+async function updateUserBalance(amount) {
+  // Повышаем баланс в профиле
+  const { data: profile } = await supabase.from('profiles').select('ux_gold_balance').eq('telegram_id', USER_ID).single();
+  const currentBalance = profile ? profile.ux_gold_balance : 0;
+  
+  await supabase.from('profiles').upsert({
+    telegram_id: USER_ID,
+    username: tg?.initDataUnsafe?.user?.username || '',
+    first_name: USER_NAME,
+    ux_gold_balance: currentBalance + amount
+  });
+}
