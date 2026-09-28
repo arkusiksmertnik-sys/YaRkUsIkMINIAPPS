@@ -2,19 +2,18 @@ const express = require('express');
 const crypto = require('crypto');
 const cors = require('cors');
 const sqlite3 = require('sqlite3').verbose();
-require('dotenv').config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Замените на токен вашего бота в файле .env (BOT_TOKEN=...)
-const BOT_TOKEN = process.env.BOT_TOKEN || "ВАШ_ТОКЕН_БОТА"; 
-const ADMIN_TELEGRAM_ID = Number(process.env.ADMIN_ID || "123456789"); // Ваш Telegram ID
+// Токен бота и твои права админа
+const BOT_TOKEN = "8725200601:AAHKWptj_5YpKg-Y7II4xfsfESrxVm1I0eI"; 
+const ADMIN_TELEGRAM_ID = 7261979362 ; // <--- Вставь сюда свои цифры (без кавычек)
 
+// Автоматически создаём локальную базу данных SQLite
 const db = new sqlite3.Database('./database.sqlite');
 
-// Инициализация БД
 db.serialize(() => {
     db.run(`CREATE TABLE IF NOT EXISTS tracks (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -26,7 +25,7 @@ db.serialize(() => {
     )`);
 });
 
-// Безопасная валидация initData от Telegram
+// Проверка подлинности данных от Telegram
 function verifyTelegramData(initData) {
     if (!initData) return false;
     const urlParams = new URLSearchParams(initData);
@@ -42,23 +41,21 @@ function verifyTelegramData(initData) {
     const calculatedHash = crypto.createHmac('sha256', secretKey).update(paramsStr).digest('hex');
 
     if (calculatedHash !== hash) return false;
-
-    const user = JSON.parse(urlParams.get('user') || '{}');
-    return user;
+    return JSON.parse(urlParams.get('user') || '{}');
 }
 
-// Middleware проверки прав Админа
+// Проверка, что запрос шлёт именно админ
 function adminAuth(req, res, next) {
     const user = verifyTelegramData(req.body.initData);
     if (user && user.id === ADMIN_TELEGRAM_ID) {
         req.adminUser = user;
         next();
     } else {
-        res.status(403).json({ error: 'Доступ запрещен. Вы не администратор.' });
+        res.status(403).json({ error: 'Доступ запрещён. Вы не администратор.' });
     }
 }
 
-// Pubic API
+// Запросы данных для всех пользователей
 app.get('/api/tracks', (req, res) => {
     db.all("SELECT * FROM tracks ORDER BY id DESC", [], (err, rows) => res.json(rows || []));
 });
@@ -72,7 +69,7 @@ app.post('/api/admin/check', (req, res) => {
     res.json({ isAdmin: user && user.id === ADMIN_TELEGRAM_ID });
 });
 
-// Protected Admin API
+// Добавление трека (Только для админа)
 app.post('/api/admin/tracks', adminAuth, (req, res) => {
     const { title, cover, audio, link, release_date, is_upcoming } = req.body;
     db.run(
@@ -85,6 +82,7 @@ app.post('/api/admin/tracks', adminAuth, (req, res) => {
     );
 });
 
+// Публикация новости (Только для админа)
 app.post('/api/admin/news', adminAuth, (req, res) => {
     const { text, image } = req.body;
     const date = new Date().toLocaleDateString('ru-RU');
@@ -98,4 +96,4 @@ app.post('/api/admin/news', adminAuth, (req, res) => {
     );
 });
 
-app.listen(3000, () => console.log('Сервер запущен на порту 3000'));
+app.listen(3000, () => console.log('🚀 Сервер базы данных запущен на порту 3000!'));
