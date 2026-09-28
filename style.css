@@ -35,7 +35,6 @@ main { flex: 1; overflow-y: auto; padding: 16px; padding-bottom: 90px; }
 .dock-btn { background: none; border: none; color: rgba(255,255,255,0.5); font-size: 10px; display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; flex: 1; transition: color 0.2s; }
 .dock-btn span { font-weight: 500; }
 .dock-btn.active { color: var(--accent-color); }
-.dock-btn svg { width: 20px; height: 20px; fill: currentColor; }
 
 /* Кликер */
 .clicker-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; min-height: 400px; text-align: center; gap: 16px; }
@@ -46,21 +45,28 @@ main { flex: 1; overflow-y: auto; padding: 16px; padding-bottom: 90px; }
 .floating-plus { position: absolute; color: #ffb800; font-weight: 900; font-size: 18px; pointer-events: none; animation: floatUp 0.8s ease-out forwards; text-shadow: 0 2px 4px rgba(0,0,0,0.8); z-index: 100; }
 @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-70px) scale(1.2); } }
 
-/* Карточки и элементы */
+/* Элементы каталога */
 .search-box input { width: 100%; padding: 10px 14px; background: rgba(255,255,255,0.06); border: 1px solid var(--border-color); border-radius: 10px; color: white; outline: none; margin-bottom: 12px; }
 .presave-btn { background: rgba(255,42,85,0.15); color: var(--accent-color); border: 1px solid rgba(255,42,85,0.4); padding: 6px 12px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 12px; }
 .like-btn { background: rgba(255,255,255,0.06); border: 1px solid var(--border-color); color: white; padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 12px; display: inline-flex; align-items: center; gap: 4px; }
 .delete-btn { background: rgba(255,0,0,0.2); color: #ff4d4d; border: none; padding: 4px 8px; border-radius: 6px; cursor: pointer; font-size: 11px; }
 
-.grid-catalog { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.grid-catalog { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 8px; }
 .gift-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 14px; padding: 12px; text-align: center; }
+
+/* Чат */
+.chat-container { height: calc(100vh - 250px); overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; padding-right: 4px; }
+.chat-msg { background: var(--card-bg); border: 1px solid var(--border-color); padding: 8px 12px; border-radius: 10px; font-size: 13px; max-width: 85%; word-break: break-word; }
+.chat-msg.my { background: rgba(255,42,85,0.15); border-color: rgba(255,42,85,0.3); align-self: flex-end; }
+.chat-input-box { display: flex; gap: 8px; }
+.chat-input-box input { flex: 1; padding: 10px; background: rgba(255,255,255,0.06); border: 1px solid var(--border-color); border-radius: 10px; color: white; outline: none; }
 
 /* Плеер */
 .player-bar { position: absolute; bottom: 68px; left: 0; width: 100%; background: rgba(20, 22, 30, 0.95); backdrop-filter: blur(10px); border-top: 1px solid var(--border-color); padding: 10px 16px; display: flex; align-items: center; z-index: 9; }
 .player-progress-track { width: 100%; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 6px; cursor: pointer; position: relative; }
 .player-progress-bar { width: 0%; height: 100%; background: var(--accent-color); border-radius: 2px; }
 
-/* Админ модалка */
+/* Модалка админки */
 .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; z-index: 100; }
 .modal-content { width: 90%; max-width: 400px; max-height: 90vh; overflow-y: auto; }
 .admin-input { width: 100%; padding: 10px; margin-bottom: 8px; background: rgba(255,255,255,0.06); border: 1px solid var(--border-color); border-radius: 8px; color: white; font-size: 13px; }
