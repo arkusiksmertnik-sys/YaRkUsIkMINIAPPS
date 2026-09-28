@@ -1,269 +1,246 @@
-// Инициализация Telegram WebApp SDK
+// Конфигурация Supabase с твоими ключами
+const SUPABASE_URL = 'https://ktdzlkfoqunuwanpmxnt.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0ZHpsa2ZvcXVudXdhbnBteG50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA2MDgzNTIsImV4cCI6MjEwNjE4NDM1Mn0.KPVqb5R9h1u4OCIkY27T4GBsoNeps4yen3o4gpBBmhw';
+
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// Твой Telegram ID — с галочкой и правами администратора
+const ADMIN_TELEGRAM_ID = 7261979362;
+
 const tg = window.Telegram?.WebApp;
 if (tg) {
-    tg.expand();
     tg.ready();
+    tg.expand();
 }
 
-// Конфигурация сервера API (Замените на URL вашего Node.js бэкенда)
-const API_BASE_URL = 'https://hip-buttons-cheer.loca.lt
-';
-
-// Состояние приложения
-let state = {
-    user: tg?.initDataUnsafe?.user || { id: 0, first_name: 'Гость', username: '' },
-    isAdmin: false,
-    favorites: JSON.parse(localStorage.getItem('yksi_favorites') || '[]'),
-    tracks: [],
-    news: []
-};
-
-document.addEventListener('DOMContentLoaded', async () => {
-    initUser();
-    await checkAdminStatus();
-    await loadData();
-    renderAll();
-});
-
-// Инициализация профиля
-function initUser() {
-    if (state.user.first_name) {
-        document.getElementById('user-name').innerText = `${state.user.first_name} ${state.user.last_name || ''}`;
-        document.getElementById('user-username').innerText = state.user.username ? `@${state.user.username}` : '';
-        if (state.user.photo_url) {
-            document.getElementById('user-avatar').src = state.user.photo_url;
-        }
-    }
+// Проверка админа
+function isAdmin() {
+    const user = tg?.initDataUnsafe?.user;
+    return user && Number(user.id) === Number(ADMIN_TELEGRAM_ID);
 }
 
-// Проверка админ-доступа на сервере
-async function checkAdminStatus() {
-    if (!tg?.initData) return;
-    try {
-        const res = await fetch(`${API_BASE_URL}/admin/check`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ initData: tg.initData })
-        });
-        const data = await res.json();
-        if (data.isAdmin) {
-            state.isAdmin = true;
-            document.getElementById('admin-banner').classList.remove('hidden');
-        }
-    } catch (e) {
-        console.warn('Серверная база недоступна для проверки прав.');
-    }
-}
-
-// Загрузка данных
-async function loadData() {
-    try {
-        const [tracksRes, newsRes] = await Promise.all([
-            fetch(`${API_BASE_URL}/tracks`),
-            fetch(`${API_BASE_URL}/news`)
-        ]);
-        if (tracksRes.ok) state.tracks = await tracksRes.json();
-        if (newsRes.ok) state.news = await newsRes.json();
-    } catch (e) {
-        showServerNotice();
-    }
-}
-
-function showServerNotice() {
-    console.log('Подключите Node.js сервер для полноценной работы БД.');
-}
-
-// Навигация
+// Переключение Вкладок
 function switchTab(tabName) {
-    document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-    document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
 
-    document.querySelectorAll('.nav-btn').forEach(btn => {
-        btn.classList.remove('text-accentRed');
-        btn.classList.add('text-gray-400');
-    });
-    document.getElementById(`nav-${tabName}`).classList.add('text-accentRed');
-    document.getElementById(`nav-${tabName}`).classList.remove('text-gray-400');
-}
-
-// Рендеринг
-function renderAll() {
-    renderHome();
-    renderMusic();
-    renderNews();
-    renderFavorites();
-}
-
-function renderHome() {
-    const latestTrack = state.tracks[0];
-    const latestReleaseBlock = document.getElementById('latest-release-content');
-
-    if (latestTrack) {
-        latestReleaseBlock.innerHTML = `
-            <div class="flex gap-3 items-center">
-                <img src="${latestTrack.cover}" class="w-16 h-16 rounded-xl object-cover">
-                <div class="flex-1 min-w-0">
-                    <h3 class="font-bold text-white text-sm truncate">${latestTrack.title}</h3>
-                    <p class="text-xs text-gray-400">${latestTrack.release_date}</p>
-                    <div class="flex gap-2 mt-2">
-                        <a href="${latestTrack.link}" target="_blank" class="px-3 py-1 bg-accentRed text-white text-[11px] rounded-lg font-medium">
-                            ${latestTrack.is_upcoming ? 'Предсохранить' : 'Слушать'}
-                        </a>
-                        <button onclick="toggleFavorite(${latestTrack.id})" class="px-2 py-1 bg-gray-800 text-gray-300 text-[11px] rounded-lg">
-                            ${isFav(latestTrack.id) ? '★ В избранном' : '☆ Сохранить'}
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
-    const newsFeed = document.getElementById('home-news-feed');
-    if (state.news.length > 0) {
-        newsFeed.innerHTML = state.news.slice(0, 2).map(item => `
-            <div class="glass-card rounded-xl p-3 text-xs space-y-1">
-                <p class="text-gray-300 line-clamp-2">${item.text}</p>
-                <span class="text-[10px] text-gray-500">${item.date}</span>
-            </div>
-        `).join('');
+    if (tabName === 'tracks') {
+        document.querySelectorAll('.tab-btn')[0].classList.add('active');
+        document.getElementById('tab-tracks').classList.add('active');
+    } else if (tabName === 'news') {
+        document.querySelectorAll('.tab-btn')[1].classList.add('active');
+        document.getElementById('tab-news').classList.add('active');
+    } else if (tabName === 'stats') {
+        document.querySelectorAll('.tab-btn')[2].classList.add('active');
+        document.getElementById('tab-stats').classList.add('active');
     }
 }
 
-function renderMusic() {
-    const musicList = document.getElementById('music-list');
-    if (state.tracks.length === 0) return;
-
-    musicList.innerHTML = state.tracks.map(track => `
-        <div class="glass-card rounded-xl p-3 flex flex-col gap-3">
-            <div class="flex gap-3 items-center">
-                <img src="${track.cover}" class="w-14 h-14 rounded-lg object-cover">
-                <div class="flex-1 min-w-0">
-                    <h4 class="font-bold text-sm text-white truncate">${track.title}</h4>
-                    <p class="text-xs text-gray-400">${track.release_date}</p>
-                </div>
-                <button onclick="shareTrack('${track.title}', '${track.link}')" class="text-gray-400 hover:text-white">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
-                </button>
-            </div>
-            ${track.audio ? `<audio controls src="${track.audio}" class="w-full h-8 mt-1"></audio>` : ''}
-            <div class="flex justify-between items-center border-t border-gray-800/60 pt-2 text-xs">
-                <a href="${track.link}" target="_blank" class="text-accentRed font-semibold">
-                    ${track.is_upcoming ? 'Пресейв' : 'Площадки'} &rarr;
-                </a>
-                <button onclick="toggleFavorite(${track.id})" class="text-gray-400">
-                    ${isFav(track.id) ? '❤️ В избранном' : '🤍 В избранное'}
-                </button>
-            </div>
-        </div>
-    `).join('');
+// Окна Админки
+function openAdminModal() {
+    document.getElementById('admin-modal').style.display = 'flex';
 }
 
-function renderNews() {
-    const newsList = document.getElementById('news-list');
-    if (state.news.length === 0) return;
-
-    newsList.innerHTML = state.news.map(item => `
-        <div class="glass-card rounded-xl p-4 space-y-3">
-            <p class="text-xs text-gray-200 leading-relaxed">${item.text}</p>
-            ${item.image ? `<img src="${item.image}" class="rounded-lg w-full max-h-48 object-cover">` : ''}
-            <div class="flex justify-between items-center text-[11px] text-gray-500 pt-1">
-                <span>${item.date}</span>
-                <button onclick="shareNews('${item.id}')" class="text-accentRed">Поделиться в TG</button>
-            </div>
-        </div>
-    `).join('');
+function closeAdminModal() {
+    document.getElementById('admin-modal').style.display = 'none';
 }
 
-function renderFavorites() {
-    const favList = document.getElementById('favorites-list');
-    const favTracks = state.tracks.filter(t => state.favorites.includes(t.id));
+function switchAdminTab(type) {
+    document.querySelectorAll('.admin-tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.admin-form').forEach(f => f.classList.remove('active'));
 
-    if (favTracks.length === 0) {
-        favList.innerHTML = '<p class="text-xs text-gray-500">Список избранного пуст.</p>';
+    if (type === 'add-track') {
+        document.querySelectorAll('.admin-tab-btn')[0].classList.add('active');
+        document.getElementById('form-track').classList.add('active');
+    } else {
+        document.querySelectorAll('.admin-tab-btn')[1].classList.add('active');
+        document.getElementById('form-news').classList.add('active');
+    }
+}
+
+// Поделиться треком
+function shareTrack(title, link) {
+    if (navigator.share) {
+        navigator.share({
+            title: `YaRkUsIk — ${title}`,
+            text: `Слушай новый трек от YaRkUsIk: ${title}`,
+            url: link || window.location.href
+        });
+    } else {
+        navigator.clipboard.writeText(link || window.location.href);
+        alert('Ссылка скопирована!');
+    }
+}
+
+// Данные треков и новостей
+let allTracks = [];
+let allNews = [];
+
+async function loadTracks() {
+    const container = document.getElementById('tracks-list');
+    const { data: tracks, error } = await db.from('tracks').select('*').order('id', { ascending: false });
+
+    if (error || !tracks) {
+        container.innerHTML = `<div class="loading-spinner">Ошибка загрузки треков</div>`;
         return;
     }
 
-    favList.innerHTML = favTracks.map(track => `
-        <div class="glass-card rounded-xl p-3 flex justify-between items-center">
-            <div class="flex gap-3 items-center">
-                <img src="${track.cover}" class="w-10 h-10 rounded-lg">
-                <div>
-                    <h5 class="text-xs font-bold text-white">${track.title}</h5>
-                    <a href="${track.link}" target="_blank" class="text-[10px] text-accentRed">Слушать</a>
+    allTracks = tracks;
+    document.getElementById('total-tracks-count').innerText = tracks.length;
+    renderTracks(allTracks);
+}
+
+function renderTracks(tracks) {
+    const container = document.getElementById('tracks-list');
+    if (tracks.length === 0) {
+        container.innerHTML = `<div class="loading-spinner">Треков не найдено</div>`;
+        return;
+    }
+
+    container.innerHTML = tracks.map(t => `
+        <div class="track-card">
+            <div class="track-top">
+                <img class="track-cover" src="${t.cover || 'https://via.placeholder.com/150'}" alt="${t.title}" />
+                <div class="track-details">
+                    <div class="track-title">${t.title} ${t.is_upcoming ? '🔥 [Сниппет]' : ''}</div>
+                    <div class="author-tag">
+                        <span>Автор: <strong>YaRkUsIk</strong></span>
+                        <span class="blue-badge">✓</span>
+                    </div>
+                    ${t.release_date ? `<div class="track-date">Дата: ${t.release_date}</div>` : ''}
                 </div>
             </div>
-            <button onclick="toggleFavorite(${track.id})" class="text-xs text-gray-500">&times;</button>
+
+            ${t.audio ? `<audio controls src="${t.audio}"></audio>` : ''}
+
+            <div class="track-actions">
+                ${t.link ? `<a class="listen-link" href="${t.link}" target="_blank">Слушать ➔</a>` : ''}
+                <button class="share-btn" onclick="shareTrack('${t.title}', '${t.link}')">🔗 Поделиться</button>
+                ${isAdmin() ? `<button class="delete-btn" onclick="deleteTrack(${t.id})">🗑 Удалить</button>` : ''}
+            </div>
         </div>
     `).join('');
 }
 
-// Работа с Избранным
-function isFav(id) { return state.favorites.includes(id); }
+async function loadNews() {
+    const container = document.getElementById('news-list');
+    const { data: news, error } = await db.from('news').select('*').order('id', { ascending: false });
 
-function toggleFavorite(id) {
-    if (isFav(id)) {
-        state.favorites = state.favorites.filter(favId => favId !== id);
-    } else {
-        state.favorites.push(id);
+    if (error || !news) {
+        container.innerHTML = `<div class="loading-spinner">Ошибка загрузки новостей</div>`;
+        return;
     }
-    localStorage.setItem('yksi_favorites', JSON.stringify(state.favorites));
-    renderAll();
+
+    allNews = news;
+    document.getElementById('total-news-count').innerText = news.length;
+
+    if (news.length === 0) {
+        container.innerHTML = `<div class="loading-spinner">Новостей пока нет</div>`;
+        return;
+    }
+
+    container.innerHTML = news.map(n => `
+        <div class="news-card">
+            ${n.image ? `<img class="news-img" src="${n.image}" alt="News" />` : ''}
+            <div class="news-text">${n.text}</div>
+            <div class="news-footer">
+                <div class="author-tag">
+                    <span>Автор: <strong>YaRkUsIk</strong></span>
+                    <span class="blue-badge">✓</span>
+                </div>
+                <span>${n.date || ''}</span>
+            </div>
+            ${isAdmin() ? `<div style="margin-top:10px;"><button class="delete-btn" onclick="deleteNews(${n.id})">🗑 Удалить публикацию</button></div>` : ''}
+        </div>
+    `).join('');
 }
 
-// Поделиться
-function shareTrack(title, link) {
-    if (tg?.openTelegramLink) {
-        tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent('Слушай новый трек ЯрКуСиК / YKSI — ' + title)}`);
-    } else {
-        window.open(link, '_blank');
-    }
+// Поиск в реальном времени
+function handleSearch() {
+    const query = document.getElementById('search-input').value.toLowerCase();
+    const filteredTracks = allTracks.filter(t => t.title.toLowerCase().includes(query));
+    renderTracks(filteredTracks);
 }
 
-// Админ-панель модалка
-function openAdminModal() { document.getElementById('admin-modal').classList.remove('hidden'); }
-function closeAdminModal() { document.getElementById('admin-modal').classList.add('hidden'); }
+// Удаление записей (Админ)
+async function deleteTrack(id) {
+    if (!confirm('Удалить этот трек?')) return;
+    await db.from('tracks').delete().eq('id', id);
+    loadTracks();
+}
 
-// Обработчики форм (Отправка на backend)
-async function handleCreateTrack(e) {
+async function deleteNews(id) {
+    if (!confirm('Удалить эту новость?')) return;
+    await db.from('news').delete().eq('id', id);
+    loadNews();
+}
+
+// Создание трека
+async function handleTrackSubmit(e) {
     e.preventDefault();
-    const payload = {
-        initData: tg.initData,
+    if (!isAdmin()) return alert('Нет прав!');
+
+    const trackData = {
         title: document.getElementById('track-title').value,
         cover: document.getElementById('track-cover').value,
         audio: document.getElementById('track-audio').value,
         link: document.getElementById('track-link').value,
         release_date: document.getElementById('track-date').value,
-        is_upcoming: document.getElementById('track-is-upcoming').checked
+        is_upcoming: document.getElementById('track-upcoming').checked
     };
-    await sendAdminRequest(`${API_BASE_URL}/admin/tracks`, payload);
-}
 
-async function handleCreateNews(e) {
-    e.preventDefault();
-    const payload = {
-        initData: tg.initData,
-        text: document.getElementById('news-text').value,
-        image: document.getElementById('news-image').value
-    };
-    await sendAdminRequest(`${API_BASE_URL}/admin/news`, payload);
-}
-
-async function sendAdminRequest(url, payload) {
-    try {
-        const res = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-        if (res.ok) {
-            alert('Успешно сохранено!');
-            closeAdminModal();
-            await loadData();
-            renderAll();
-        } else {
-            alert('Ошибка сервера или отказано в доступе.');
-        }
-    } catch (e) {
-        alert('Сервер недоступен. Подключите бэкенд.');
+    const { error } = await db.from('tracks').insert([trackData]);
+    if (error) {
+        alert('Ошибка добавления: ' + error.message);
+    } else {
+        alert('Трек опубликован от имени YaRkUsIk ☑️!');
+        closeAdminModal();
+        loadTracks();
     }
 }
+
+// Создание новости
+async function handleNewsSubmit(e) {
+    e.preventDefault();
+    if (!isAdmin()) return alert('Нет прав!');
+
+    const newsData = {
+        text: document.getElementById('news-text').value,
+        image: document.getElementById('news-image').value,
+        date: new Date().toLocaleDateString('ru-RU')
+    };
+
+    const { error } = await db.from('news').insert([newsData]);
+    if (error) {
+        alert('Ошибка добавления: ' + error.message);
+    } else {
+        alert('Новость опубликована от имени YaRkUsIk ☑️!');
+        closeAdminModal();
+        loadNews();
+    }
+}
+
+// Старт приложения
+document.addEventListener('DOMContentLoaded', () => {
+    if (tg?.initDataUnsafe?.user) {
+        const user = tg.initDataUnsafe.user;
+        const userNameElem = document.getElementById('user-name');
+        userNameElem.innerText = user.first_name || 'YaRkUsIk';
+        
+        if (user.photo_url) {
+            document.getElementById('user-avatar').src = user.photo_url;
+        }
+
+        // Если это твоя учетная запись (Telegram ID: 7261979362)
+        if (Number(user.id) === Number(ADMIN_TELEGRAM_ID)) {
+            document.getElementById('role-badge').innerText = 'Verified Admin';
+        }
+    }
+
+    if (isAdmin()) {
+        document.getElementById('admin-badge').style.display = 'block';
+    }
+
+    loadTracks();
+    loadNews();
+});
