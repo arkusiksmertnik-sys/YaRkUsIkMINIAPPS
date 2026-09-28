@@ -2,17 +2,26 @@ const express = require('express');
 const crypto = require('crypto');
 const cors = require('cors');
 const sqlite3 = require('sqlite3').verbose();
+const path = require('path');
+const fs = require('fs');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Токен бота и твои права админа
+// Токен бота и Telegram ID админа
 const BOT_TOKEN = "8725200601:AAHKWptj_5YpKg-Y7II4xfsfESrxVm1I0eI"; 
-const ADMIN_TELEGRAM_ID = 7261979362 ; // <--- Вставь сюда свои цифры (без кавычек)
+const ADMIN_TELEGRAM_ID = 7261979362 ; // <--- Не забудь указать свой Telegram ID (цифрами)
 
-// Автоматически создаём локальную базу данных SQLite
-const db = new sqlite3.Database('./database.sqlite');
+// Создаём папку .data для Glitch, если её ещё нет
+const dataDir = path.join(__dirname, '.data');
+if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir);
+}
+
+// Путь к базе данных внутри папки .data (чтобы данные не удалялись на Glitch)
+const dbPath = path.join(dataDir, 'database.sqlite');
+const db = new sqlite3.Database(dbPath);
 
 db.serialize(() => {
     db.run(`CREATE TABLE IF NOT EXISTS tracks (
@@ -25,7 +34,7 @@ db.serialize(() => {
     )`);
 });
 
-// Проверка подлинности данных от Telegram
+// Проверка подлинности данных Telegram
 function verifyTelegramData(initData) {
     if (!initData) return false;
     const urlParams = new URLSearchParams(initData);
@@ -44,7 +53,7 @@ function verifyTelegramData(initData) {
     return JSON.parse(urlParams.get('user') || '{}');
 }
 
-// Проверка, что запрос шлёт именно админ
+// Проверка прав Администратора
 function adminAuth(req, res, next) {
     const user = verifyTelegramData(req.body.initData);
     if (user && user.id === ADMIN_TELEGRAM_ID) {
@@ -55,7 +64,7 @@ function adminAuth(req, res, next) {
     }
 }
 
-// Запросы данных для всех пользователей
+// Публичные маршруты
 app.get('/api/tracks', (req, res) => {
     db.all("SELECT * FROM tracks ORDER BY id DESC", [], (err, rows) => res.json(rows || []));
 });
@@ -69,7 +78,7 @@ app.post('/api/admin/check', (req, res) => {
     res.json({ isAdmin: user && user.id === ADMIN_TELEGRAM_ID });
 });
 
-// Добавление трека (Только для админа)
+// Админские маршруты (публикация)
 app.post('/api/admin/tracks', adminAuth, (req, res) => {
     const { title, cover, audio, link, release_date, is_upcoming } = req.body;
     db.run(
@@ -82,7 +91,6 @@ app.post('/api/admin/tracks', adminAuth, (req, res) => {
     );
 });
 
-// Публикация новости (Только для админа)
 app.post('/api/admin/news', adminAuth, (req, res) => {
     const { text, image } = req.body;
     const date = new Date().toLocaleDateString('ru-RU');
@@ -96,4 +104,6 @@ app.post('/api/admin/news', adminAuth, (req, res) => {
     );
 });
 
-app.listen(3000, () => console.log('🚀 Сервер базы данных запущен на порту 3000!'));
+// Запуск сервера (Glitch сам передаёт порт через process.env.PORT)
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`🚀 Сервер запущен на порту ${PORT}`));
