@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>YaRkUsIk Mini App</title>
+    <title>YaRkUsIk Mini App — Crimson Glass Edition</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=3">
+    <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
+    <!-- Фоновые глубокие красные рубиновые пятна -->
     <div class="background-blobs">
         <div class="blob blob-1"></div>
         <div class="blob blob-2"></div>
@@ -20,14 +21,14 @@
         <header class="glass-header">
             <div class="profile-info">
                 <div class="avatar-glow">
-                    <img id="user-avatar" src="https://via.placeholder.com/100" alt="Avatar">
+                    <img id="user-avatar" src="https://via.placeholder.com/100/1c0508/ff2a55?text=Y" alt="Avatar">
                 </div>
                 <div>
                     <div class="title-with-badge">
-                        <h1 id="user-name">YaRkUsIk</h1>
-                        <span class="blue-badge" title="Подтвержденный профиль">✓</span>
+                        <h1 id="user-name">Гость</h1>
+                        <span id="verified-badge" class="blue-badge" style="display: none;" title="Подтвержденный профиль YaRkUsIk">✓</span>
                     </div>
-                    <span class="badge" id="role-badge">Official Artist</span>
+                    <span class="badge" id="role-badge">Слушатель</span>
                 </div>
             </div>
             <button id="admin-badge" class="admin-btn-trigger" style="display: none;" onclick="openAdminModal()">
@@ -38,14 +39,20 @@
         <!-- Поисковая строка -->
         <div class="search-box glass-card">
             <span class="search-icon">🔍</span>
-            <input type="text" id="search-input" placeholder="Поиск по релизом и новостям..." oninput="handleSearch()">
+            <input type="text" id="search-input" placeholder="Поиск по трекам и новостям..." oninput="handleSearch()">
         </div>
 
         <!-- ОСНОВНОЙ КОНТЕНТ (РАЗДЕЛЫ) -->
 
-        <!-- 1. Вкладка: Главная / Треки -->
+        <!-- 1. Вкладка: Главная -->
         <main id="tab-tracks" class="tab-content active">
-            <h2 class="section-title">🎵 Релизы & Сниппеты</h2>
+            <!-- Закрепленный последний пост из новостей -->
+            <div id="latest-news-banner" class="featured-news-card glass-card" style="display: none;">
+                <div class="featured-tag">📌 ПОСЛЕДНЯЯ НОВОСТЬ</div>
+                <div id="latest-news-content"></div>
+            </div>
+
+            <h2 class="section-title">🎵 Все релизы & Треки</h2>
             <div id="tracks-list" class="cards-grid">
                 <div class="loading-spinner">Загрузка музыки...</div>
             </div>
@@ -59,47 +66,47 @@
             </div>
         </main>
 
-        <!-- 3. Вкладка: Предстоящее (Upcoming) -->
+        <!-- 3. Вкладка: Пресейвы & Анонсы -->
         <main id="tab-upcoming" class="tab-content">
-            <h2 class="section-title">🔥 Анонсы & Сниппеты</h2>
+            <h2 class="section-title">🔥 Эксклюзивные Анонсы & Pre-Save</h2>
             <div id="upcoming-list" class="cards-grid">
                 <div class="loading-spinner">Загрузка анонсов...</div>
             </div>
         </main>
 
-        <!-- 4. Вкладка: Информация / Профиль -->
+        <!-- 4. Вкладка: Личный Профиль / Информация -->
         <main id="tab-info" class="tab-content">
             <div class="glass-card info-card">
-                <h2>👤 О художнике</h2>
-                <div class="artist-hero">
-                    <h3>YaRkUsIk <span class="blue-badge">✓</span></h3>
-                    <p>Официальная карточка музыканта в Telegram Mini App.</p>
+                <div class="profile-hero">
+                    <img id="profile-hero-avatar" src="https://via.placeholder.com/100/1c0508/ff2a55?text=Y" class="hero-avatar">
+                    <h2 class="hero-name"><span id="profile-hero-name">Имя</span> <span id="hero-badge" class="blue-badge" style="display:none;">✓</span></h2>
+                    <p class="hero-sub" id="profile-hero-status">Слушатель</p>
                 </div>
                 
                 <div class="stats-grid">
                     <div class="stat-item">
-                        <span class="stat-num" id="total-tracks-count">0</span>
-                        <span class="stat-label">Релизов</span>
+                        <span class="stat-num" id="user-presaves-count">0</span>
+                        <span class="stat-label">Мои Pre-Save</span>
                     </div>
                     <div class="stat-item">
-                        <span class="stat-num" id="total-news-count">0</span>
-                        <span class="stat-label">Новостей</span>
+                        <span class="stat-num" id="total-tracks-count">0</span>
+                        <span class="stat-label">Всего треков</span>
                     </div>
                 </div>
 
                 <div class="info-links">
-                    <a href="https://t.me/yarkusik" target="_blank" class="glass-link-btn">💬 Telegram Канал</a>
+                    <a href="https://t.me/yarkusik" target="_blank" class="crimson-btn">💬 Официальный Telegram Канал</a>
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- НИЖНЯЯ СТЕКЛЯННАЯ DOCK-ПАНЕЛЬ (iOS Navigation Dock) -->
+    <!-- НИЖНЯЯ ПЛАВАЮЩАЯ DOCK-ПАНЕЛЬ (Crimson Glass Dock) -->
     <div class="dock-container">
         <nav class="glass-dock">
             <button class="dock-btn active" onclick="switchTab('tracks')">
                 <span class="dock-icon">🎵</span>
-                <span class="dock-label">Треки</span>
+                <span class="dock-label">Главная</span>
             </button>
             <button class="dock-btn" onclick="switchTab('news')">
                 <span class="dock-icon">📰</span>
@@ -107,11 +114,11 @@
             </button>
             <button class="dock-btn" onclick="switchTab('upcoming')">
                 <span class="dock-icon">🔥</span>
-                <span class="dock-label">Анонсы</span>
+                <span class="dock-label">Pre-Save</span>
             </button>
             <button class="dock-btn" onclick="switchTab('info')">
                 <span class="dock-icon">👤</span>
-                <span class="dock-label">Инфо</span>
+                <span class="dock-label">Профиль</span>
             </button>
         </nav>
     </div>
@@ -120,38 +127,63 @@
     <div id="admin-modal" class="glass-modal">
         <div class="modal-content glass-card">
             <div class="modal-header">
-                <h2>Панель администрирования</h2>
+                <h2>⚡ Админ-панель YaRkUsIk</h2>
                 <button class="close-btn" onclick="closeAdminModal()">✕</button>
             </div>
             
             <div class="admin-tabs">
                 <button class="admin-tab-btn active" onclick="switchAdminTab('add-track')">+ Трек</button>
                 <button class="admin-tab-btn" onclick="switchAdminTab('add-news')">+ Новость</button>
+                <button class="admin-tab-btn" onclick="switchAdminTab('edit-likes')">❤️ Накрутка</button>
             </div>
 
-            <!-- Форма Трека -->
+            <!-- Форма добавления трека -->
             <form id="form-track" class="admin-form active" onsubmit="handleTrackSubmit(event)">
                 <input type="text" id="track-title" placeholder="Название трека" required>
-                <input type="url" id="track-cover" placeholder="Ссылка на обложку (URL)" required>
-                <input type="url" id="track-audio" placeholder="Прямая ссылка на MP3/Аудио">
-                <input type="url" id="track-link" placeholder="Ссылка на карточку/стриминг">
-                <input type="text" id="track-date" placeholder="Дата релиза (напр: 25.10.2026)">
-                <label class="checkbox-label">
-                    <input type="checkbox" id="track-upcoming"> Пометить как Анонс / Сниппет
+                
+                <label class="file-upload-label">
+                    <span>🖼️ Загрузить обложку (с устройства):</span>
+                    <input type="file" id="track-cover-file" accept="image/*" onchange="convertFileToBase64(this, 'track-cover-data')">
+                    <input type="hidden" id="track-cover-data">
                 </label>
-                <button type="submit" class="apple-btn">Опубликовать от YaRkUsIk ☑️</button>
+
+                <label class="file-upload-label">
+                    <span>🎵 Загрузить MP3/Аудио (с устройства):</span>
+                    <input type="file" id="track-audio-file" accept="audio/*" onchange="convertFileToBase64(this, 'track-audio-data')">
+                    <input type="hidden" id="track-audio-data">
+                </label>
+
+                <input type="url" id="track-link" placeholder="Ссылка на стриминг (Apple Music / Yandex)">
+                <input type="text" id="track-date" placeholder="Дата релиза (напр: 20.10.2026)">
+                <input type="number" id="track-initial-likes" placeholder="Начальное количество лайков" value="0">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="track-upcoming"> Сделать Анонсом / Сниппетом (Pre-Save)
+                </label>
+                <button type="submit" class="crimson-btn">Опубликовать от YaRkUsIk ☑️</button>
             </form>
 
-            <!-- Форма Новостей -->
+            <!-- Форма добавления новостей -->
             <form id="form-news" class="admin-form" onsubmit="handleNewsSubmit(event)">
                 <textarea id="news-text" placeholder="Текст новости..." rows="4" required></textarea>
-                <input type="url" id="news-image" placeholder="Ссылка на картинку (URL)">
-                <button type="submit" class="apple-btn">Опубликовать от YaRkUsIk ☑️</button>
+                <label class="file-upload-label">
+                    <span>🖼️ Картинка к новости (с устройства):</span>
+                    <input type="file" id="news-image-file" accept="image/*" onchange="convertFileToBase64(this, 'news-image-data')">
+                    <input type="hidden" id="news-image-data">
+                </label>
+                <button type="submit" class="crimson-btn">Опубликовать от YaRkUsIk ☑️</button>
             </form>
+
+            <!-- Форма Накрутки/Изменения Лайков -->
+            <div id="form-likes" class="admin-form">
+                <p class="admin-hint">Выберите трек и укажите нужное количество лайков:</p>
+                <select id="boost-track-select" class="admin-select"></select>
+                <input type="number" id="boost-likes-count" placeholder="Новое кол-во лайков">
+                <button type="button" class="crimson-btn" onclick="applyLikesBoost()">Установить лайки 🔥</button>
+            </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="app.js"></script>
+    <script src="app.js?v=3"></script>
 </body>
 </html>
