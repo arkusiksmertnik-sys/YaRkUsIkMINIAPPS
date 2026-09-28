@@ -169,6 +169,13 @@ body {
 /* Карточки */
 .cards-grid, .news-grid { display: flex; flex-direction: column; gap: 14px; }
 
+/* Сетка для каталога подарков и инвентаря */
+.gifts-grid-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+}
+
 .track-card, .news-card, .task-card {
     background: rgba(35, 10, 15, 0.55);
     backdrop-filter: blur(20px);
