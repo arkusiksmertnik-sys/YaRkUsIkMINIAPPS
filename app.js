@@ -1,464 +1,354 @@
+// ==========================================
+// 1. КОНФИГУРАЦИЯ СУПАБЕЙЗ И КЛЮЧИ
+// ==========================================
 const SUPABASE_URL = 'https://ktdzlkfoqunuwanpmxnt.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0ZHpsa2ZvcXVudXdhbnBteG50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA2MDgzNTIsImV4cCI6MjEwNjE4NDM1Mn0.KPVqb5R9h1u4OCIkY27T4GBsoNeps4yen3o4gpBBmhw';
 
-const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// СТРОГО ID АДМИНА YARKUSIK (ТОЛЬКО ЕМУ ГАЛОЧКА И АДМИНКА)
+// Твой единственный администраторский Telegram ID (YaRkUsIk)
 const ADMIN_TELEGRAM_ID = 7261979362;
 
+// ==========================================
+// 2. ИНИЦИАЛИЗАЦИЯ TELEGRAM WEBAPP
+// ==========================================
 const tg = window.Telegram?.WebApp;
 if (tg) {
-    tg.ready();
-    tg.expand();
+  tg.ready();
+  tg.expand();
 }
 
 function getUser() {
-    return tg?.initDataUnsafe?.user || { id: 999999, first_name: 'Пользователь' };
+  return tg?.initDataUnsafe?.user || { id: 999888777, first_name: 'Слушатель' };
 }
+
+const USER = getUser();
+const USER_ID = USER.id;
+const USER_NAME = USER.first_name || 'Слушатель';
 
 function isArtistAdmin() {
-    const user = getUser();
-    return Number(user.id) === Number(ADMIN_TELEGRAM_ID);
+  return Number(USER_ID) === Number(ADMIN_TELEGRAM_ID);
 }
 
-// Конвертация файлов с устройства в Base64 для сохранения прямо в БД
-function convertFileToBase64(fileInput, hiddenInputId) {
-    const file = fileInput.files[0];
-    if (!file) return;
+// Список заданий для раздела "Заработать UX Gold"
+const TASKS = [
+  { id: 'sub_channel', title: 'Подписка на официальный канал YaRkUsIk', reward: 500, link: 'https://t.me/yarkusik' },
+  { id: 'sub_chat', title: 'Вступить в официальный чат', reward: 300, link: 'https://t.me/yarkusik' }
+];
 
-    const reader = new FileReader();
-    reader.onloadend = function () {
-        document.getElementById(hiddenInputId).value = reader.result;
-    };
-    reader.readAsDataURL(file);
-}
-
-// Переключение Вкладок
-function switchTab(tabName) {
-    const buttons = document.querySelectorAll('.dock-btn');
-    const tabs = document.querySelectorAll('.tab-content');
-
-    buttons.forEach(btn => btn.classList.remove('active'));
-    tabs.forEach(tab => tab.classList.remove('active'));
-
-    if (tabName === 'tracks') {
-        buttons[0].classList.add('active');
-        document.getElementById('tab-tracks').classList.add('active');
-    } else if (tabName === 'news') {
-        buttons[1].classList.add('active');
-        document.getElementById('tab-news').classList.add('active');
-    } else if (tabName === 'upcoming') {
-        buttons[2].classList.add('active');
-        document.getElementById('tab-upcoming').classList.add('active');
-    } else if (tabName === 'info') {
-        buttons[3].classList.add('active');
-        document.getElementById('tab-info').classList.add('active');
-    }
-}
-
-function openAdminModal() { 
-    document.getElementById('admin-modal').style.display = 'flex'; 
-    populateBoostSelect();
-}
-function closeAdminModal() { document.getElementById('admin-modal').style.display = 'none'; }
-
-function switchAdminTab(type) {
-    document.querySelectorAll('.admin-tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.admin-form').forEach(f => f.classList.remove('active'));
-
-    if (type === 'add-track') {
-        document.querySelectorAll('.admin-tab-btn')[0].classList.add('active');
-        document.getElementById('form-track').classList.add('active');
-    } else if (type === 'add-news') {
-        document.querySelectorAll('.admin-tab-btn')[1].classList.add('active');
-        document.getElementById('form-news').classList.add('active');
-    } else {
-        document.querySelectorAll('.admin-tab-btn')[2].classList.add('active');
-        document.getElementById('form-likes').classList.add('active');
-    }
-}
-
+let userBalance = 0;
 let allTracks = [];
 let allNews = [];
 
-// Локальное хранение пресейвов юзера
-function getSavedPresaves() {
-    return JSON.parse(localStorage.getItem('user_presaves') || '[]');
-}
-
-async function loadTracks() {
-    const { data: tracks, error } = await db.from('tracks').select('*').order('id', { ascending: false });
-    if (error || !tracks) return;
-
-    allTracks = tracks;
-    document.getElementById('total-tracks-count').innerText = tracks.length;
-
-    renderTracks(allTracks.filter(t => !t.is_upcoming), 'tracks-list');
-    renderTracks(allTracks.filter(t => t.is_upcoming), 'upcoming-list');
-}
-
-function renderTracks(tracks, containerId) {
-    const container = document.getElementById(containerId);
-    if (tracks.length === 0) {
-        container.innerHTML = `<div class="loading-spinner">В этом разделе пока нет треков</div>`;
-        return;
-    }
-
-    const savedPresaves = getSavedPresaves();
-
-    container.innerHTML = tracks.map(t => {
-        const isPreSave = t.is_upcoming;
-        const isSaved = savedPresaves.includes(t.id);
-        const likesCount = t.likes || 0;
-
-        return `
-        <div class="track-card">
-            <div class="track-top">
-                <img class="track-cover" src="${t.cover || 'https://via.placeholder.com/150/1c0508/ff2a55?text=Y'}" alt="${t.title}" />
-                <div class="track-details">
-                    <div class="track-title">${t.title} ${isPreSave ? '🔥' : ''}</div>
-                    <div class="author-tag">
-                        <span>Автор: <strong>YaRkUsIk</strong></span>
-                        <span class="blue-badge">✓</span>
-                    </div>
-                    ${t.release_date ? `<div class="track-date">Дата: ${t.release_date}</div>` : ''}
-                </div>
-            </div>
-
-            ${t.audio ? `
-                <div class="custom-audio-player">
-                    <button class="play-pause-btn" onclick="toggleAudio('audio-${t.id}', this)">▶</button>
-                    <audio id="audio-${t.id}" src="${t.audio}" onended="this.previousElementSibling.innerText='▶'"></audio>
-                    <div style="font-size:12px; color:rgba(255,255,255,0.6);">Прослушать сниппет/трек</div>
-                </div>
-            ` : ''}
-
-            <div class="track-actions">
-                <button class="like-btn" onclick="likeTrack(${t.id}, ${likesCount})">
-                    ❤️ <span>${likesCount}</span>
-                </button>
-
-                ${isPreSave ? `
-                    <button class="presave-btn ${isSaved ? 'saved' : ''}" onclick="togglePresave(${t.id})">
-                        ${isSaved ? '✅ Pre-Saved' : '🔥 Pre-Save'}
-                    </button>
-                ` : ''}
-
-                ${t.link ? `<a class="listen-link" href="${t.link}" target="_blank">Слушать ➔</a>` : ''}
-                <button class="share-btn" onclick="shareTrack('${t.title}', '${t.link}')">🔗</button>
-                ${isArtistAdmin() ? `<button class="delete-btn" onclick="deleteTrack(${t.id})">🗑</button>` : ''}
-            </div>
-        </div>
-        `;
-    }).join('');
-}
-
-function toggleAudio(audioId, btn) {
-    const audio = document.getElementById(audioId);
-    if (audio.paused) {
-        document.querySelectorAll('audio').forEach(a => a.pause());
-        document.querySelectorAll('.play-pause-btn').forEach(b => b.innerText = '▶');
-        audio.play();
-        btn.innerText = '❚❚';
-    } else {
-        audio.pause();
-        btn.innerText = '▶';
-    }
-}
-
-async function likeTrack(id, currentLikes) {
-    const newLikes = currentLikes + 1;
-    await db.from('tracks').update({ likes: newLikes }).eq('id', id);
-    loadTracks();
-}
-
-function togglePresave(id) {
-    let presaves = getSavedPresaves();
-    if (presaves.includes(id)) {
-        presaves = presaves.filter(pId => pId !== id);
-    } else {
-        presaves.push(id);
-    }
-    localStorage.setItem('user_presaves', JSON.stringify(presaves));
-    document.getElementById('user-presaves-count').innerText = presaves.length;
-    loadTracks();
-}
-
-async function loadNews() {
-    const container = document.getElementById('news-list');
-    const { data: news, error } = await db.from('news').select('*').order('id', { ascending: false });
-    if (error || !news) return;
-
-    allNews = news;
-
-    if (news.length > 0) {
-        // Показываем последний пост на главной
-        const latest = news[0];
-        document.getElementById('latest-news-banner').style.display = 'block';
-        document.getElementById('latest-news-content').innerHTML = `
-            <p style="font-size:14px; margin-bottom:8px;">${latest.text}</p>
-            <div style="font-size:11px; color:rgba(255,255,255,0.4);">Дата: ${latest.date || ''}</div>
-        `;
-    }
-
-    if (news.length === 0) {
-        container.innerHTML = `<div class="loading-spinner">Новостей пока нет</div>`;
-        return;
-    }
-
-    container.innerHTML = news.map(n => `
-        <div class="news-card">
-            ${n.image ? `<img class="news-img" src="${n.image}" style="width:100%; border-radius:14px;" />` : ''}
-            <div class="news-text" style="font-size:14px; line-height:1.4;">${n.text}</div>
-            <div class="news-footer" style="display:flex; justify-content:space-between; margin-top:10px; font-size:12px;">
-                <div class="author-tag">
-                    <span>Автор: <strong>YaRkUsIk</strong></span>
-                    <span class="blue-badge">✓</span>
-                </div>
-                <span style="color:rgba(255,255,255,0.4);">${n.date || ''}</span>
-            </div>
-            ${isArtistAdmin() ? `<div style="margin-top:10px;"><button class="delete-btn" onclick="deleteNews(${n.id})">🗑 Удалить</button></div>` : ''}
-        </div>
-    `).join('');
-}
-
-function populateBoostSelect() {
-    const select = document.getElementById('boost-track-select');
-    select.innerHTML = allTracks.map(t => `<option value="${t.id}">${t.title} (Сейчас: ${t.likes || 0} ❤️)</option>`).join('');
-}
-
-async function applyLikesBoost() {
-    const trackId = document.getElementById('boost-track-select').value;
-    const newLikes = parseInt(document.getElementById('boost-likes-count').value);
-
-    if (!trackId || isNaN(newLikes)) return alert('Укажите корректные данные');
-
-    await db.from('tracks').update({ likes: newLikes }).eq('id', trackId);
-    alert('Лайки успешно обновлены!');
-    closeAdminModal();
-    loadTracks();
-}
-
-function handleSearch() {
-    const query = document.getElementById('search-input').value.toLowerCase();
-    const filtered = allTracks.filter(t => t.title.toLowerCase().includes(query));
-    renderTracks(filtered.filter(t => !t.is_upcoming), 'tracks-list');
-    renderTracks(filtered.filter(t => t.is_upcoming), 'upcoming-list');
-}
-
-function shareTrack(title, link) {
-    if (navigator.share) {
-        navigator.share({ title: `YaRkUsIk — ${title}`, url: link || window.location.href });
-    } else {
-        navigator.clipboard.writeText(link || window.location.href);
-        alert('Ссылка скопирована!');
-    }
-}
-
-async function deleteTrack(id) {
-    if (!confirm('Удалить трек?')) return;
-    await db.from('tracks').delete().eq('id', id);
-    loadTracks();
-}
-
-async function deleteNews(id) {
-    if (!confirm('Удалить новость?')) return;
-    await db.from('news').delete().eq('id', id);
-    loadNews();
-}
-
-async function handleTrackSubmit(e) {
-    e.preventDefault();
-    if (!isArtistAdmin()) return;
-
-    const trackData = {
-        title: document.getElementById('track-title').value,
-        cover: document.getElementById('track-cover-data').value,
-        audio: document.getElementById('track-audio-data').value,
-        link: document.getElementById('track-link').value,
-        release_date: document.getElementById('track-date').value,
-        likes: parseInt(document.getElementById('track-initial-likes').value) || 0,
-        is_upcoming: document.getElementById('track-upcoming').checked
-    };
-
-    const { error } = await db.from('tracks').insert([trackData]);
-    if (!error) {
-        closeAdminModal();
-        loadTracks();
-    }
-}
-
-async function handleNewsSubmit(e) {
-    e.preventDefault();
-    if (!isArtistAdmin()) return;
-
-    const newsData = {
-        text: document.getElementById('news-text').value,
-        image: document.getElementById('news-image-data').value,
-        date: new Date().toLocaleDateString('ru-RU')
-    };
-
-    const { error } = await db.from('news').insert([newsData]);
-    if (!error) {
-        closeAdminModal();
-        loadNews();
-    }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    const user = getUser();
-    const isOwner = isArtistAdmin();
-
-    // Персонализация профиля пользователя
-    document.getElementById('user-name').innerText = user.first_name || 'Гость';
-    document.getElementById('profile-hero-name').innerText = user.first_name || 'Гость';
-    
-    if (user.photo_url) {
-        document.getElementById('user-avatar').src = user.photo_url;
-        document.getElementById('profile-hero-avatar').src = user.photo_url;
-    }
-
-    // Синяя галочка и доступ к админке — ТОЛЬКО ДЛЯ YARKUSIK
-    if (isOwner) {
-        document.getElementById('verified-badge').style.display = 'inline-flex';
-        document.getElementById('hero-badge').style.display = 'inline-flex';
-        document.getElementById('role-badge').innerText = 'Official Artist';
-        document.getElementById('profile-hero-status').innerText = 'Verified Creator';
-        document.getElementById('admin-badge').style.display = 'block';
-    } else {
-        document.getElementById('verified-badge').style.display = 'none';
-        document.getElementById('hero-badge').style.display = 'none';
-        document.getElementById('role-badge').innerText = 'Слушатель';
-        document.getElementById('profile-hero-status').innerText = 'Ценитель музыки';
-        document.getElementById('admin-badge').style.display = 'none';
-    }
-
-    document.getElementById('user-presaves-count').innerText = getSavedPresaves().length;
-
-    loadTracks();
-    loadNews();
+// ==========================================
+// 3. СТАРТ ПРИЛОЖЕНИЯ И ИНИЦИАЛИЗАЦИЯ
+// ==========================================
+document.addEventListener('DOMContentLoaded', async () => {
+  initUserProfile();
+  loadTracks();
+  loadNews();
+  loadTasks();
 });
 
-// Инициализация Telegram WebApp
-const tg = window.Telegram?.WebApp;
-tg?.expand();
-
-const USER_ID = tg?.initDataUnsafe?.user?.id || 123456789; // Запасной ID для тестов в браузере
-const USER_NAME = tg?.initDataUnsafe?.user?.first_name || 'Слушатель';
-
-// Конфигурация Supabase (Убедись, что клиент supabase инициализирован)
-// const supabase = supabase.createClient('URL', 'KEY');
-
-// 1. Форматирование чисел (1000 -> 1k, 1000000 -> 1M)
-function formatNumber(num) {
+// Форматирование больших чисел (например, 1200 -> 1.2k, 1000000 -> 1M)
+function formatNum(num) {
   if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
   if (num >= 1000) return (num / 1000).toFixed(1) + 'k';
-  return num.toString();
+  return (num || 0).toString();
 }
 
-// 2. Универсальная система лайков с защитой от повторного клика
-async function toggleLike(targetType, targetId, countElementId) {
-  try {
-    // Проверяем, ставил ли юзер уже лайк
-    const { data: existingLike } = await supabase
-      .from('likes')
-      .select('id')
-      .eq('telegram_id', USER_ID)
-      .eq('target_type', targetType)
-      .eq('target_id', targetId)
-      .single();
+// Переключение экранов (кнопки "Назад" и Меню)
+function showScreen(screenId) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const target = document.getElementById(screenId);
+  if (target) target.classList.add('active');
+}
 
-    if (existingLike) {
-      // Пользователь уже лайкал -> Убираем лайк
-      await supabase.from('likes').delete().eq('id', existingLike.id);
-      await decrementCounter(targetType, targetId);
-    } else {
-      // Ставим лайк
-      await supabase.from('likes').insert([
-        { telegram_id: USER_ID, target_type: targetType, target_id: targetId }
-      ]);
-      await incrementCounter(targetType, targetId);
-    }
+// Синхронизация профиля с базой данных
+async function initUserProfile() {
+  const headerUser = document.getElementById('header-username');
+  const profName = document.getElementById('prof-name');
+  const profId = document.getElementById('prof-id');
 
-    // Обновляем отображение
-    updateLikeUI(targetType, targetId, countElementId);
-  } catch (err) {
-    console.error('Ошибка лайка:', err);
+  if (headerUser) headerUser.innerText = USER_NAME;
+  if (profName) profName.innerText = USER_NAME;
+  if (profId) profId.innerText = `ID: ${USER_ID}`;
+
+  if (USER.photo_url) {
+    const headerAvatar = document.getElementById('header-avatar');
+    if (headerAvatar) headerAvatar.innerHTML = `<img src="${USER.photo_url}" style="width:24px;height:24px;border-radius:50%;">`;
+  }
+
+  // Получаем или создаем профиль пользователя в таблице profiles
+  let { data: profile } = await supabase.from('profiles').select('*').eq('telegram_id', USER_ID).single();
+
+  if (!profile) {
+    const { data: newProf } = await supabase.from('profiles').insert([{
+      telegram_id: USER_ID,
+      first_name: USER_NAME,
+      username: USER.username || '',
+      ux_gold_balance: 100 // Бонус за регистрацию
+    }]).select().single();
+    profile = newProf;
+  }
+
+  userBalance = profile?.ux_gold_balance || 0;
+  updateBalanceUI();
+}
+
+function updateBalanceUI() {
+  const hb = document.getElementById('header-balance');
+  const pb = document.getElementById('prof-balance');
+  if (hb) hb.innerText = formatNum(userBalance);
+  if (pb) pb.innerText = formatNum(userBalance);
+}
+
+// ==========================================
+// 4. ТРЕКИИ РЕЛИЗЫ
+// ==========================================
+async function loadTracks() {
+  const container = document.getElementById('tracks-list');
+  if (!container) return;
+  container.innerHTML = '<div style="text-align:center;padding:20px;color:#888;">Загрузка треков...</div>';
+
+  const { data: tracks, error } = await supabase.from('tracks').select('*').order('id', { ascending: false });
+  if (error || !tracks) {
+    container.innerHTML = '<div style="text-align:center;padding:20px;color:#888;">Не удалось загрузить треки.</div>';
+    return;
+  }
+
+  allTracks = tracks;
+  container.innerHTML = '';
+
+  for (let track of tracks) {
+    // Получаем реальный подсчет лайков из таблицы likes
+    const { count } = await supabase.from('likes').select('*', { count: 'exact' }).eq('target_type', 'track').eq('target_id', track.id);
+    const likesCount = count || track.likes || 0;
+
+    const el = document.createElement('div');
+    el.className = 'glass-card track-card';
+    
+    const isUpcoming = track.is_upcoming;
+
+    el.innerHTML = `
+      <div class="track-main">
+        <img src="${track.cover || 'https://via.placeholder.com/60/1c0508/ff2a55?text=Y'}" class="track-cover" alt="cover">
+        <div>
+          <strong>${track.title}</strong>
+          <div style="font-size:12px; color:rgba(255,255,255,0.7); display:flex; align-items:center; gap:4px; margin-top:2px;">
+            <span>Автор: <strong>YaRkUsIk</strong></span>
+            <span style="background:#007aff; color:#fff; border-radius:50%; width:14px; height:14px; display:inline-flex; align-items:center; justify-content:center; font-size:8px; font-weight:bold;">✓</span>
+          </div>
+          <small style="color: var(--text-muted); font-size:11px;">${isUpcoming ? '📅 Анонс: ' + (track.release_date || '') : '🔥 Релиз'}</small>
+        </div>
+      </div>
+      <div class="track-actions">
+        ${isUpcoming 
+          ? `<button class="btn-neon" onclick="handlePresave(${track.id}, this)">🔔 Пресейв</button>`
+          : (track.audio ? `<button class="btn-neon" onclick="playAudio('${track.audio}', '${track.title}', '${track.cover}')">▶️ Слушать</button>` : '')
+        }
+        <button class="btn-outline" onclick="toggleLike('track', ${track.id}, 'track-like-${track.id}')">
+          ❤️ <span id="track-like-${track.id}">${formatNum(likesCount)}</span>
+        </button>
+        ${track.link ? `<a href="${track.link}" target="_blank" class="btn-outline" style="text-decoration:none; text-align:center;">🔗</a>` : ''}
+      </div>
+    `;
+    container.appendChild(el);
   }
 }
 
-// 3. Системный счетчик пресейвов
-async function handlePresave(trackId, btnElement) {
-  const { data: existing } = await supabase
-    .from('presaves_v2')
-    .select('id')
-    .eq('telegram_id', USER_ID)
-    .eq('track_id', trackId)
-    .single();
+// ==========================================
+// 5. НОВОСТИ И ЛЕНТА
+// ==========================================
+async function loadNews() {
+  const container = document.getElementById('news-list');
+  if (!container) return;
+
+  const { data: news } = await supabase.from('news').select('*').order('id', { ascending: false });
+  if (!news) return;
+
+  allNews = news;
+  container.innerHTML = '';
+
+  for (let item of news) {
+    const { count } = await supabase.from('likes').select('*', { count: 'exact' }).eq('target_type', 'news').eq('target_id', item.id);
+
+    const el = document.createElement('div');
+    el.className = 'glass-card news-card';
+    el.innerHTML = `
+      ${item.image ? `<img src="${item.image}" style="width:100%; border-radius:12px; margin-bottom:8px;" alt="news">` : ''}
+      <p style="font-size:14px; line-height:1.4;">${item.text}</p>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+        <div style="font-size:12px; display:flex; align-items:center; gap:4px;">
+          <span>Автор: <strong>YaRkUsIk</strong></span>
+          <span style="background:#007aff; color:#fff; border-radius:50%; width:14px; height:14px; display:inline-flex; align-items:center; justify-content:center; font-size:8px; font-weight:bold;">✓</span>
+        </div>
+        <button class="btn-outline" onclick="toggleLike('news', ${item.id}, 'news-like-${item.id}')">
+          ❤️ <span id="news-like-${item.id}">${formatNum(count || 0)}</span>
+        </button>
+      </div>
+    `;
+    container.appendChild(el);
+  }
+}
+
+// ==========================================
+// 6. ЛАЙКИ И ПРЕСЕЙВЫ (ЗАЩИТА ОТ НАКРУТКИ)
+// ==========================================
+async function toggleLike(type, id, elementId) {
+  const { data: existing } = await supabase.from('likes').select('id').eq('telegram_id', USER_ID).eq('target_type', type).eq('target_id', id).single();
 
   if (existing) {
-    tg?.showPopup({ title: 'Информация', message: 'Вы уже оформили пресейв на этот трек!' });
-    return;
+    // Пользователь уже лайкал -> убираем лайк
+    await supabase.from('likes').delete().eq('id', existing.id);
+  } else {
+    // Добавляем новый уник лайк
+    await supabase.from('likes').insert([{ telegram_id: USER_ID, target_type: type, target_id: id }]);
   }
 
-  await supabase.from('presaves_v2').insert([
-    { telegram_id: USER_ID, track_id: trackId }
-  ]);
-
-  btnElement.innerText = '✅ Сохранено';
-  btnElement.classList.add('disabled');
-  tg?.showPopup({ title: 'Успешно!', message: 'Трек появится у вас в день релиза!' });
+  const { count } = await supabase.from('likes').select('*', { count: 'exact' }).eq('target_type', type).eq('target_id', id);
+  const targetElem = document.getElementById(elementId);
+  if (targetElem) targetElem.innerText = formatNum(count || 0);
 }
 
-// 4. Экономика UX Gold: Калькулятор Конвертер
-function convertCurrency(value, type) {
-  // Курс: 1 RUB = 100 UX Gold
-  if (type === 'rub_to_gold') {
-    return value * 100;
-  } else if (type === 'gold_to_rub') {
-    return (value / 100).toFixed(2);
-  }
-}
-
-// 5. Раздел «Заработать» — Модуль заданий
-const TASKS_CONFIG = [
-  { id: 'sub_main_channel', title: 'Подписка на ТГ-канал YaRkUsIk', reward: 500, link: 'https://t.me/yarkusik' },
-  { id: 'sub_chat', title: 'Вступить в оф. чат', reward: 300, link: 'https://t.me/yarkusik' }
-];
-
-async function checkAndRewardTask(taskId, rewardAmount, link) {
-  // Открываем ссылку
-  tg?.openTelegramLink(link);
-
-  // Проверяем, начислена ли уже награда
-  const { data: done } = await supabase
-    .from('completed_tasks')
-    .select('id')
-    .eq('telegram_id', USER_ID)
-    .eq('task_id', taskId)
-    .single();
+async function handlePresave(trackId, btn) {
+  const { data: done } = await supabase.from('presaves_v2').select('id').eq('telegram_id', USER_ID).eq('track_id', trackId).single();
 
   if (done) {
-    tg?.showAlert('Вы уже получили награду за это задание!');
+    tg?.showAlert('Вы уже оформили пресейв на этот релиз!');
     return;
   }
 
-  // Фиксируем выполнение и начисляем баланс
-  await supabase.from('completed_tasks').insert([{ telegram_id: USER_ID, task_id: taskId }]);
-  await updateUserBalance(rewardAmount);
-
-  tg?.showAlert(`🎉 Начислено +${rewardAmount} UX Gold!`);
+  await supabase.from('presaves_v2').insert([{ telegram_id: USER_ID, track_id: trackId }]);
+  btn.innerText = '✅ Сохранено';
+  btn.disabled = true;
+  btn.style.opacity = '0.6';
+  tg?.showAlert('Успешно! Трек сохранен в твои пресейвы!');
 }
 
-async function updateUserBalance(amount) {
-  // Повышаем баланс в профиле
-  const { data: profile } = await supabase.from('profiles').select('ux_gold_balance').eq('telegram_id', USER_ID).single();
-  const currentBalance = profile ? profile.ux_gold_balance : 0;
+// ==========================================
+// 7. ЗАДАНИЯ И ЭКОНОМИКА UX GOLD
+// ==========================================
+async function loadTasks() {
+  const container = document.getElementById('tasks-list');
+  if (!container) return;
+  container.innerHTML = '';
+
+  for (let task of TASKS) {
+    const { data: completed } = await supabase.from('completed_tasks').select('id').eq('telegram_id', USER_ID).eq('task_id', task.id).single();
+
+    const el = document.createElement('div');
+    el.className = 'glass-card task-card';
+    el.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <strong>${task.title}</strong><br>
+          <small style="color: #ffb800; font-weight:bold;">+${task.reward} UX Gold</small>
+        </div>
+        <button class="btn-neon" ${completed ? 'disabled style="opacity:0.5"' : ''} onclick="executeTask('${task.id}', ${task.reward}, '${task.link}', this)">
+          ${completed ? '✅ Выполнено' : 'Выполнить'}
+        </button>
+      </div>
+    `;
+    container.appendChild(el);
+  }
+}
+
+async function executeTask(taskId, reward, link, btn) {
+  tg?.openTelegramLink(link);
+
+  setTimeout(async () => {
+    await supabase.from('completed_tasks').insert([{ telegram_id: USER_ID, task_id: taskId }]);
+    
+    userBalance += reward;
+    await supabase.from('profiles').update({ ux_gold_balance: userBalance }).eq('telegram_id', USER_ID);
+    
+    updateBalanceUI();
+    btn.innerText = '✅ Выполнено';
+    btn.disabled = true;
+    btn.style.opacity = '0.5';
+    tg?.showAlert(`🎉 Начислено +${reward} UX Gold!`);
+  }, 2500);
+}
+
+// Калькулятор конвертера валют
+function convertFromGold() {
+  const goldInput = document.getElementById('calc-gold');
+  const rubInput = document.getElementById('calc-rub');
+  if (!goldInput || !rubInput) return;
+  const gold = parseFloat(goldInput.value) || 0;
+  rubInput.value = (gold / 100).toFixed(2);
+}
+
+function convertFromRub() {
+  const goldInput = document.getElementById('calc-gold');
+  const rubInput = document.getElementById('calc-rub');
+  if (!goldInput || !rubInput) return;
+  const rub = parseFloat(rubInput.value) || 0;
+  goldInput.value = Math.round(rub * 100);
+}
+
+// ==========================================
+// 8. КАСТОМНЫЙ АУДИОПЛЕЕР
+// ==========================================
+const audio = document.getElementById('audio-element');
+
+function playAudio(url, title, cover) {
+  if (!url || !audio) return;
   
-  await supabase.from('profiles').upsert({
-    telegram_id: USER_ID,
-    username: tg?.initDataUnsafe?.user?.username || '',
-    first_name: USER_NAME,
-    ux_gold_balance: currentBalance + amount
-  });
+  audio.src = url;
+  audio.play();
+
+  const pTitle = document.getElementById('player-title');
+  const pCover = document.getElementById('player-cover');
+  const pBar = document.getElementById('player-bar');
+  const pBtn = document.getElementById('player-play-btn');
+
+  if (pTitle) pTitle.innerText = title;
+  if (pCover) pCover.src = cover || 'https://via.placeholder.com/50/1c0508/ff2a55?text=Y';
+  if (pBar) pBar.classList.remove('hidden');
+  if (pBtn) pBtn.innerText = '⏸';
+}
+
+function togglePlayPause() {
+  if (!audio) return;
+  const pBtn = document.getElementById('player-play-btn');
+  if (audio.paused) {
+    audio.play();
+    if (pBtn) pBtn.innerText = '⏸';
+  } else {
+    audio.pause();
+    if (pBtn) pBtn.innerText = '▶️';
+  }
+}
+
+if (audio) {
+  audio.ontimeupdate = () => {
+    if (audio.duration) {
+      const pct = (audio.currentTime / audio.duration) * 100;
+      const progress = document.getElementById('player-progress');
+      if (progress) progress.style.width = pct + '%';
+    }
+  };
+}
+
+function seekAudio(e) {
+  if (!audio || !audio.duration) return;
+  const container = e.currentTarget;
+  const rect = container.getBoundingClientRect();
+  const clickX = e.clientX - rect.left;
+  audio.currentTime = (clickX / rect.width) * audio.duration;
+}
+
+// Конвертация локальных файлов (картинки/MP3) в Base64 для Админки
+function convertFileToBase64(fileInput, hiddenInputId) {
+  const file = fileInput.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onloadend = function () {
+    const hiddenElem = document.getElementById(hiddenInputId);
+    if (hiddenElem) hiddenElem.value = reader.result;
+  };
+  reader.readAsDataURL(file);
 }
