@@ -137,7 +137,34 @@
             </div>
         </main>
 
-        <!-- 7. Вкладка: Профиль & Конвертер -->
+        <!-- 7. Вкладка: Подарки (НОВОЕ) -->
+        <main id="tab-gifts" class="tab-content">
+            <button class="btn-back" onclick="switchTab('tracks')">← Назад</button>
+            <h2 class="section-title">🎁 Каталог подарков</h2>
+            <div id="gifts-grid" class="cards-grid">
+                <div class="loading-spinner">Загрузка подарков...</div>
+            </div>
+        </main>
+
+        <!-- 8. Вкладка: Инвентарь / Коллекция (НОВОЕ) -->
+        <main id="tab-inventory" class="tab-content">
+            <button class="btn-back" onclick="switchTab('tracks')">← Назад</button>
+            <h2 class="section-title">🎒 Моя коллекция</h2>
+            <div id="inventory-grid" class="cards-grid">
+                <div class="loading-spinner">Загрузка инвентаря...</div>
+            </div>
+        </main>
+
+        <!-- 9. Вкладка: Розыгрыши (НОВОЕ) -->
+        <main id="tab-giveaways" class="tab-content">
+            <button class="btn-back" onclick="switchTab('tracks')">← Назад</button>
+            <h2 class="section-title">🎉 Розыгрыши</h2>
+            <div id="giveaways-list" class="cards-grid">
+                <div class="loading-spinner">Загрузка розыгрышей...</div>
+            </div>
+        </main>
+
+        <!-- 10. Вкладка: Профиль & Конвертер -->
         <main id="tab-info" class="tab-content">
             <button class="btn-back" onclick="switchTab('tracks')">← Назад</button>
             <div class="glass-card info-card" style="padding: 16px;">
@@ -175,34 +202,48 @@
         </main>
     </div>
 
-    <!-- НИЖНЯЯ ПЛАВАЮЩАЯ DOCK-ПАНЕЛЬ (iOS DOCK) -->
+    <!-- НИЖНЯЯ ПЛАВАЮЩАЯ DOCK-ПАНЕЛЬ (Обновлена с новыми вкладками) -->
     <div class="dock-container">
         <nav class="glass-dock">
             <button class="dock-btn active" onclick="switchTab('tracks')">
                 <span class="dock-icon">🎵</span>
                 <span class="dock-label">Главная</span>
             </button>
-            <button class="dock-btn" onclick="switchTab('news')">
-                <span class="dock-icon">📰</span>
-                <span class="dock-label">Новости</span>
+            <button class="dock-btn" onclick="switchTab('gifts')">
+                <span class="dock-icon">🎁</span>
+                <span class="dock-label">Подарки</span>
+            </button>
+            <button class="dock-btn" onclick="switchTab('inventory')">
+                <span class="dock-icon">🎒</span>
+                <span class="dock-label">Инвентарь</span>
+            </button>
+            <button class="dock-btn" onclick="switchTab('giveaways')">
+                <span class="dock-icon">🎉</span>
+                <span class="dock-label">Розыгрыши</span>
             </button>
             <button class="dock-btn" onclick="switchTab('earn')">
                 <span class="dock-icon">💰</span>
                 <span class="dock-label">Заработать</span>
             </button>
-            <button class="dock-btn" onclick="switchTab('shop')">
-                <span class="dock-icon">🛒</span>
-                <span class="dock-label">Магазин</span>
-            </button>
             <button class="dock-btn" onclick="switchTab('tap')">
                 <span class="dock-icon">⚡</span>
-                <span class="dock-label">YKSI-Tap</span>
-            </button>
-            <button class="dock-btn" onclick="switchTab('info')">
-                <span class="dock-icon">👤</span>
-                <span class="dock-label">Профиль</span>
+                <span class="dock-label">Tap</span>
             </button>
         </nav>
+    </div>
+
+    <!-- Модальное окно отправки подарка (НОВОЕ) -->
+    <div id="send-gift-modal" class="glass-modal" style="display:none;">
+        <div class="modal-content glass-card">
+            <div class="modal-header">
+                <h2 id="modal-gift-title">Отправить подарок</h2>
+                <button class="close-btn" onclick="closeSendModal()">✕</button>
+            </div>
+            <p style="font-size: 13px; color: rgba(255,255,255,0.7); margin: 10px 0;" id="modal-gift-price"></p>
+            <input type="number" id="recipient-telegram-id" class="admin-select" placeholder="Telegram ID получателя" style="width:150px; padding:10px; margin:10px 0; background:#111; color:#fff; border:1px solid #444; border-radius:8px;">
+            <br>
+            <button class="crimson-btn" onclick="confirmSendGift()" style="margin-top:10px;">Подарить 🚀</button>
+        </div>
     </div>
 
     <!-- Модальное Окно Админки -->
