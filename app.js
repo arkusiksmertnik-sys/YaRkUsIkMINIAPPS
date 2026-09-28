@@ -1,354 +1,413 @@
-// ==========================================
-// 1. КОНФИГУРАЦИЯ СУПАБЕЙЗ И КЛЮЧИ
-// ==========================================
 const SUPABASE_URL = 'https://ktdzlkfoqunuwanpmxnt.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0ZHpsa2ZvcXVudXdhbnBteG50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA2MDgzNTIsImV4cCI6MjEwNjE4NDM1Mn0.KPVqb5R9h1u4OCIkY27T4GBsoNeps4yen3o4gpBBmhw';
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-// Твой единственный администраторский Telegram ID (YaRkUsIk)
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const ADMIN_TELEGRAM_ID = 7261979362;
 
-// ==========================================
-// 2. ИНИЦИАЛИЗАЦИЯ TELEGRAM WEBAPP
-// ==========================================
 const tg = window.Telegram?.WebApp;
 if (tg) {
-  tg.ready();
-  tg.expand();
+    tg.ready();
+    tg.expand();
 }
 
 function getUser() {
-  return tg?.initDataUnsafe?.user || { id: 999888777, first_name: 'Слушатель' };
+    return tg?.initDataUnsafe?.user || { id: 999888777, first_name: 'Слушатель' };
 }
 
 const USER = getUser();
 const USER_ID = USER.id;
 const USER_NAME = USER.first_name || 'Слушатель';
 
-function isArtistAdmin() {
-  return Number(USER_ID) === Number(ADMIN_TELEGRAM_ID);
+function isAdmin() {
+    return Number(USER_ID) === Number(ADMIN_TELEGRAM_ID);
 }
 
-// Список заданий для раздела "Заработать UX Gold"
 const TASKS = [
-  { id: 'sub_channel', title: 'Подписка на официальный канал YaRkUsIk', reward: 500, link: 'https://t.me/yarkusik' },
-  { id: 'sub_chat', title: 'Вступить в официальный чат', reward: 300, link: 'https://t.me/yarkusik' }
+    { id: 'sub_channel', title: 'Подписка на официальный канал YaRkUsIk', reward: 500, link: 'https://t.me/yarkusik' },
+    { id: 'sub_chat', title: 'Вступить в официальный чат', reward: 300, link: 'https://t.me/yarkusik' }
 ];
 
 let userBalance = 0;
 let allTracks = [];
 let allNews = [];
 
-// ==========================================
-// 3. СТАРТ ПРИЛОЖЕНИЯ И ИНИЦИАЛИЗАЦИЯ
-// ==========================================
 document.addEventListener('DOMContentLoaded', async () => {
-  initUserProfile();
-  loadTracks();
-  loadNews();
-  loadTasks();
+    initUserProfile();
+    loadTracks();
+    loadNews();
+    loadTasks();
 });
 
-// Форматирование больших чисел (например, 1200 -> 1.2k, 1000000 -> 1M)
 function formatNum(num) {
-  if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
-  if (num >= 1000) return (num / 1000).toFixed(1) + 'k';
-  return (num || 0).toString();
+    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+    if (num >= 1000) return (num / 1000).toFixed(1) + 'k';
+    return (num || 0).toString();
 }
 
-// Переключение экранов (кнопки "Назад" и Меню)
-function showScreen(screenId) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  const target = document.getElementById(screenId);
-  if (target) target.classList.add('active');
+function switchTab(tabName) {
+    const buttons = document.querySelectorAll('.dock-btn');
+    const tabs = document.querySelectorAll('.tab-content');
+
+    buttons.forEach(btn => btn.classList.remove('active'));
+    tabs.forEach(tab => tab.classList.remove('active'));
+
+    const tabMap = { 'tracks': 0, 'news': 1, 'earn': 2, 'shop': 3, 'tap': 4, 'info': 5, 'upcoming': 0 };
+    if (tabMap[tabName] !== undefined && buttons[tabMap[tabName]]) {
+        buttons[tabMap[tabName]].classList.add('active');
+    }
+
+    const targetTab = document.getElementById(`tab-${tabName}`);
+    if (targetTab) targetTab.classList.add('active');
 }
 
-// Синхронизация профиля с базой данных
+function openAdminModal() {
+    document.getElementById('admin-modal').style.display = 'flex';
+    populateBoostSelect();
+}
+function closeAdminModal() { document.getElementById('admin-modal').style.display = 'none'; }
+
+function switchAdminTab(type) {
+    document.querySelectorAll('.admin-tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.admin-form').forEach(f => f.classList.remove('active'));
+
+    if (type === 'add-track') {
+        document.querySelectorAll('.admin-tab-btn')[0].classList.add('active');
+        document.getElementById('form-track').classList.add('active');
+    } else if (type === 'add-news') {
+        document.querySelectorAll('.admin-tab-btn')[1].classList.add('active');
+        document.getElementById('form-news').classList.add('active');
+    } else {
+        document.querySelectorAll('.admin-tab-btn')[2].classList.add('active');
+        document.getElementById('form-likes').classList.add('active');
+    }
+}
+
 async function initUserProfile() {
-  const headerUser = document.getElementById('header-username');
-  const profName = document.getElementById('prof-name');
-  const profId = document.getElementById('prof-id');
+    document.getElementById('user-name').innerText = USER_NAME;
+    document.getElementById('profile-hero-name').innerText = USER_NAME;
 
-  if (headerUser) headerUser.innerText = USER_NAME;
-  if (profName) profName.innerText = USER_NAME;
-  if (profId) profId.innerText = `ID: ${USER_ID}`;
+    if (USER.photo_url) {
+        document.getElementById('user-avatar').src = USER.photo_url;
+        document.getElementById('profile-hero-avatar').src = USER.photo_url;
+    }
 
-  if (USER.photo_url) {
-    const headerAvatar = document.getElementById('header-avatar');
-    if (headerAvatar) headerAvatar.innerHTML = `<img src="${USER.photo_url}" style="width:24px;height:24px;border-radius:50%;">`;
-  }
+    if (isAdmin()) {
+        document.getElementById('verified-badge').style.display = 'inline-flex';
+        document.getElementById('hero-badge').style.display = 'inline-flex';
+        document.getElementById('role-badge').innerText = 'Official Artist';
+        document.getElementById('profile-hero-status').innerText = 'Verified Creator';
+        document.getElementById('admin-badge').style.display = 'block';
+    }
 
-  // Получаем или создаем профиль пользователя в таблице profiles
-  let { data: profile } = await supabase.from('profiles').select('*').eq('telegram_id', USER_ID).single();
+    let { data: profile } = await db.from('profiles').select('*').eq('telegram_id', USER_ID).single();
+    if (!profile) {
+        const { data: newProf } = await db.from('profiles').insert([{
+            telegram_id: USER_ID,
+            first_name: USER_NAME,
+            username: USER.username || '',
+            ux_gold_balance: 100
+        }]).select().single();
+        profile = newProf;
+    }
 
-  if (!profile) {
-    const { data: newProf } = await supabase.from('profiles').insert([{
-      telegram_id: USER_ID,
-      first_name: USER_NAME,
-      username: USER.username || '',
-      ux_gold_balance: 100 // Бонус за регистрацию
-    }]).select().single();
-    profile = newProf;
-  }
-
-  userBalance = profile?.ux_gold_balance || 0;
-  updateBalanceUI();
+    userBalance = profile?.ux_gold_balance || 0;
+    updateBalanceUI();
 }
 
 function updateBalanceUI() {
-  const hb = document.getElementById('header-balance');
-  const pb = document.getElementById('prof-balance');
-  if (hb) hb.innerText = formatNum(userBalance);
-  if (pb) pb.innerText = formatNum(userBalance);
+    document.getElementById('header-balance').innerText = formatNum(userBalance);
+    document.getElementById('prof-balance').innerText = formatNum(userBalance);
 }
 
-// ==========================================
-// 4. ТРЕКИИ РЕЛИЗЫ
-// ==========================================
 async function loadTracks() {
-  const container = document.getElementById('tracks-list');
-  if (!container) return;
-  container.innerHTML = '<div style="text-align:center;padding:20px;color:#888;">Загрузка треков...</div>';
+    const { data: tracks, error } = await db.from('tracks').select('*').order('id', { ascending: false });
+    if (error || !tracks) return;
 
-  const { data: tracks, error } = await supabase.from('tracks').select('*').order('id', { ascending: false });
-  if (error || !tracks) {
-    container.innerHTML = '<div style="text-align:center;padding:20px;color:#888;">Не удалось загрузить треки.</div>';
-    return;
-  }
+    allTracks = tracks;
+    document.getElementById('total-tracks-count').innerText = tracks.length;
 
-  allTracks = tracks;
-  container.innerHTML = '';
-
-  for (let track of tracks) {
-    // Получаем реальный подсчет лайков из таблицы likes
-    const { count } = await supabase.from('likes').select('*', { count: 'exact' }).eq('target_type', 'track').eq('target_id', track.id);
-    const likesCount = count || track.likes || 0;
-
-    const el = document.createElement('div');
-    el.className = 'glass-card track-card';
-    
-    const isUpcoming = track.is_upcoming;
-
-    el.innerHTML = `
-      <div class="track-main">
-        <img src="${track.cover || 'https://via.placeholder.com/60/1c0508/ff2a55?text=Y'}" class="track-cover" alt="cover">
-        <div>
-          <strong>${track.title}</strong>
-          <div style="font-size:12px; color:rgba(255,255,255,0.7); display:flex; align-items:center; gap:4px; margin-top:2px;">
-            <span>Автор: <strong>YaRkUsIk</strong></span>
-            <span style="background:#007aff; color:#fff; border-radius:50%; width:14px; height:14px; display:inline-flex; align-items:center; justify-content:center; font-size:8px; font-weight:bold;">✓</span>
-          </div>
-          <small style="color: var(--text-muted); font-size:11px;">${isUpcoming ? '📅 Анонс: ' + (track.release_date || '') : '🔥 Релиз'}</small>
-        </div>
-      </div>
-      <div class="track-actions">
-        ${isUpcoming 
-          ? `<button class="btn-neon" onclick="handlePresave(${track.id}, this)">🔔 Пресейв</button>`
-          : (track.audio ? `<button class="btn-neon" onclick="playAudio('${track.audio}', '${track.title}', '${track.cover}')">▶️ Слушать</button>` : '')
-        }
-        <button class="btn-outline" onclick="toggleLike('track', ${track.id}, 'track-like-${track.id}')">
-          ❤️ <span id="track-like-${track.id}">${formatNum(likesCount)}</span>
-        </button>
-        ${track.link ? `<a href="${track.link}" target="_blank" class="btn-outline" style="text-decoration:none; text-align:center;">🔗</a>` : ''}
-      </div>
-    `;
-    container.appendChild(el);
-  }
+    renderTracks(allTracks.filter(t => !t.is_upcoming), 'tracks-list');
+    renderTracks(allTracks.filter(t => t.is_upcoming), 'upcoming-list');
 }
 
-// ==========================================
-// 5. НОВОСТИ И ЛЕНТА
-// ==========================================
+function renderTracks(tracks, containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    if (tracks.length === 0) {
+        container.innerHTML = `<div class="loading-spinner">В этом разделе пока ничего нет</div>`;
+        return;
+    }
+
+    container.innerHTML = tracks.map(t => `
+        <div class="track-card">
+            <div class="track-top">
+                <img class="track-cover" src="${t.cover || 'https://via.placeholder.com/150/1c0508/ff2a55?text=Y'}" alt="${t.title}" />
+                <div class="track-details">
+                    <div class="track-title">${t.title} ${t.is_upcoming ? '🔥' : ''}</div>
+                    <div class="author-tag">
+                        <span>Автор: <strong>YaRkUsIk</strong></span>
+                        <span class="blue-badge">✓</span>
+                    </div>
+                    ${t.release_date ? `<div class="track-date">Дата: ${t.release_date}</div>` : ''}
+                </div>
+            </div>
+
+            <div class="track-actions">
+                ${t.is_upcoming 
+                    ? `<button class="presave-btn" onclick="handlePresave(${t.id}, this)">🔥 Pre-Save</button>`
+                    : (t.audio ? `<button class="presave-btn" onclick="playAudio('${t.audio}', '${t.title}', '${t.cover}')">▶️ Слушать</button>` : '')
+                }
+                <button class="like-btn" onclick="toggleLike('track', ${t.id}, 'like-track-${t.id}')">
+                    ❤️ <span id="like-track-${t.id}">${formatNum(t.likes || 0)}</span>
+                </button>
+                ${t.link ? `<a class="listen-link" href="${t.link}" target="_blank">🔗</a>` : ''}
+                ${isAdmin() ? `<button class="delete-btn" onclick="deleteTrack(${t.id})">🗑</button>` : ''}
+            </div>
+        </div>
+    `).join('');
+}
+
 async function loadNews() {
-  const container = document.getElementById('news-list');
-  if (!container) return;
+    const container = document.getElementById('news-list');
+    const { data: news, error } = await db.from('news').select('*').order('id', { ascending: false });
+    if (error || !news) return;
 
-  const { data: news } = await supabase.from('news').select('*').order('id', { ascending: false });
-  if (!news) return;
+    allNews = news;
 
-  allNews = news;
-  container.innerHTML = '';
+    if (news.length > 0) {
+        const latest = news[0];
+        document.getElementById('latest-news-banner').style.display = 'block';
+        document.getElementById('latest-news-content').innerHTML = `
+            <p style="font-size:13px; margin-bottom:6px;">${latest.text}</p>
+            <div style="font-size:10px; color:rgba(255,255,255,0.4);">${latest.date || ''}</div>
+        `;
+    }
 
-  for (let item of news) {
-    const { count } = await supabase.from('likes').select('*', { count: 'exact' }).eq('target_type', 'news').eq('target_id', item.id);
+    if (news.length === 0) {
+        container.innerHTML = `<div class="loading-spinner">Новостей пока нет</div>`;
+        return;
+    }
 
-    const el = document.createElement('div');
-    el.className = 'glass-card news-card';
-    el.innerHTML = `
-      ${item.image ? `<img src="${item.image}" style="width:100%; border-radius:12px; margin-bottom:8px;" alt="news">` : ''}
-      <p style="font-size:14px; line-height:1.4;">${item.text}</p>
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
-        <div style="font-size:12px; display:flex; align-items:center; gap:4px;">
-          <span>Автор: <strong>YaRkUsIk</strong></span>
-          <span style="background:#007aff; color:#fff; border-radius:50%; width:14px; height:14px; display:inline-flex; align-items:center; justify-content:center; font-size:8px; font-weight:bold;">✓</span>
+    container.innerHTML = news.map(n => `
+        <div class="news-card">
+            ${n.image ? `<img class="news-img" src="${n.image}" style="width:100%; border-radius:14px;" />` : ''}
+            <div class="news-text" style="font-size:13px; line-height:1.4;">${n.text}</div>
+            <div class="news-footer" style="display:flex; justify-content:space-between; margin-top:8px; font-size:11px;">
+                <div class="author-tag">
+                    <span>Автор: <strong>YaRkUsIk</strong></span>
+                    <span class="blue-badge">✓</span>
+                </div>
+                <span>${n.date || ''}</span>
+            </div>
+            ${isAdmin() ? `<div style="margin-top:8px;"><button class="delete-btn" onclick="deleteNews(${n.id})">🗑 Удалить</button></div>` : ''}
         </div>
-        <button class="btn-outline" onclick="toggleLike('news', ${item.id}, 'news-like-${item.id}')">
-          ❤️ <span id="news-like-${item.id}">${formatNum(count || 0)}</span>
-        </button>
-      </div>
-    `;
-    container.appendChild(el);
-  }
+    `).join('');
 }
 
-// ==========================================
-// 6. ЛАЙКИ И ПРЕСЕЙВЫ (ЗАЩИТА ОТ НАКРУТКИ)
-// ==========================================
 async function toggleLike(type, id, elementId) {
-  const { data: existing } = await supabase.from('likes').select('id').eq('telegram_id', USER_ID).eq('target_type', type).eq('target_id', id).single();
+    const { data: existing } = await db.from('likes').select('id').eq('telegram_id', USER_ID).eq('target_type', type).eq('target_id', id).single();
 
-  if (existing) {
-    // Пользователь уже лайкал -> убираем лайк
-    await supabase.from('likes').delete().eq('id', existing.id);
-  } else {
-    // Добавляем новый уник лайк
-    await supabase.from('likes').insert([{ telegram_id: USER_ID, target_type: type, target_id: id }]);
-  }
+    if (existing) {
+        await db.from('likes').delete().eq('id', existing.id);
+    } else {
+        await db.from('likes').insert([{ telegram_id: USER_ID, target_type: type, target_id: id }]);
+    }
 
-  const { count } = await supabase.from('likes').select('*', { count: 'exact' }).eq('target_type', type).eq('target_id', id);
-  const targetElem = document.getElementById(elementId);
-  if (targetElem) targetElem.innerText = formatNum(count || 0);
+    const { count } = await db.from('likes').select('*', { count: 'exact' }).eq('target_type', type).eq('target_id', id);
+    const targetElem = document.getElementById(elementId);
+    if (targetElem) targetElem.innerText = formatNum(count || 0);
 }
 
 async function handlePresave(trackId, btn) {
-  const { data: done } = await supabase.from('presaves_v2').select('id').eq('telegram_id', USER_ID).eq('track_id', trackId).single();
+    const { data: done } = await db.from('presaves_v2').select('id').eq('telegram_id', USER_ID).eq('track_id', trackId).single();
 
-  if (done) {
-    tg?.showAlert('Вы уже оформили пресейв на этот релиз!');
-    return;
-  }
+    if (done) {
+        tg?.showAlert('Вы уже оформили пресейв!');
+        return;
+    }
 
-  await supabase.from('presaves_v2').insert([{ telegram_id: USER_ID, track_id: trackId }]);
-  btn.innerText = '✅ Сохранено';
-  btn.disabled = true;
-  btn.style.opacity = '0.6';
-  tg?.showAlert('Успешно! Трек сохранен в твои пресейвы!');
+    await db.from('presaves_v2').insert([{ telegram_id: USER_ID, track_id: trackId }]);
+    btn.innerText = '✅ Pre-Saved';
+    btn.disabled = true;
+    tg?.showAlert('Успешно! Трек сохранен.');
 }
 
-// ==========================================
-// 7. ЗАДАНИЯ И ЭКОНОМИКА UX GOLD
-// ==========================================
 async function loadTasks() {
-  const container = document.getElementById('tasks-list');
-  if (!container) return;
-  container.innerHTML = '';
+    const container = document.getElementById('tasks-list');
+    if (!container) return;
+    container.innerHTML = '';
 
-  for (let task of TASKS) {
-    const { data: completed } = await supabase.from('completed_tasks').select('id').eq('telegram_id', USER_ID).eq('task_id', task.id).single();
+    for (let task of TASKS) {
+        const { data: completed } = await db.from('completed_tasks').select('id').eq('telegram_id', USER_ID).eq('task_id', task.id).single();
 
-    const el = document.createElement('div');
-    el.className = 'glass-card task-card';
-    el.innerHTML = `
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <div>
-          <strong>${task.title}</strong><br>
-          <small style="color: #ffb800; font-weight:bold;">+${task.reward} UX Gold</small>
-        </div>
-        <button class="btn-neon" ${completed ? 'disabled style="opacity:0.5"' : ''} onclick="executeTask('${task.id}', ${task.reward}, '${task.link}', this)">
-          ${completed ? '✅ Выполнено' : 'Выполнить'}
-        </button>
-      </div>
-    `;
-    container.appendChild(el);
-  }
+        const el = document.createElement('div');
+        el.className = 'glass-card task-card';
+        el.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <strong>${task.title}</strong><br>
+                    <small style="color: #ffb800; font-weight:bold;">+${task.reward} UX Gold</small>
+                </div>
+                <button class="presave-btn" ${completed ? 'disabled style="opacity:0.5"' : ''} onclick="executeTask('${task.id}', ${task.reward}, '${task.link}', this)">
+                    ${completed ? '✅ Выполнено' : 'Выполнить'}
+                </button>
+            </div>
+        `;
+        container.appendChild(el);
+    }
 }
 
 async function executeTask(taskId, reward, link, btn) {
-  tg?.openTelegramLink(link);
+    tg?.openTelegramLink(link);
 
-  setTimeout(async () => {
-    await supabase.from('completed_tasks').insert([{ telegram_id: USER_ID, task_id: taskId }]);
-    
-    userBalance += reward;
-    await supabase.from('profiles').update({ ux_gold_balance: userBalance }).eq('telegram_id', USER_ID);
-    
-    updateBalanceUI();
-    btn.innerText = '✅ Выполнено';
-    btn.disabled = true;
-    btn.style.opacity = '0.5';
-    tg?.showAlert(`🎉 Начислено +${reward} UX Gold!`);
-  }, 2500);
+    setTimeout(async () => {
+        await db.from('completed_tasks').insert([{ telegram_id: USER_ID, task_id: taskId }]);
+        userBalance += reward;
+        await db.from('profiles').update({ ux_gold_balance: userBalance }).eq('telegram_id', USER_ID);
+        
+        updateBalanceUI();
+        btn.innerText = '✅ Выполнено';
+        btn.disabled = true;
+        tg?.showAlert(`🎉 Начислено +${reward} UX Gold!`);
+    }, 2500);
 }
 
-// Калькулятор конвертера валют
 function convertFromGold() {
-  const goldInput = document.getElementById('calc-gold');
-  const rubInput = document.getElementById('calc-rub');
-  if (!goldInput || !rubInput) return;
-  const gold = parseFloat(goldInput.value) || 0;
-  rubInput.value = (gold / 100).toFixed(2);
+    const gold = parseFloat(document.getElementById('calc-gold').value) || 0;
+    document.getElementById('calc-rub').value = (gold / 100).toFixed(2);
 }
 
 function convertFromRub() {
-  const goldInput = document.getElementById('calc-gold');
-  const rubInput = document.getElementById('calc-rub');
-  if (!goldInput || !rubInput) return;
-  const rub = parseFloat(rubInput.value) || 0;
-  goldInput.value = Math.round(rub * 100);
+    const rub = parseFloat(document.getElementById('calc-rub').value) || 0;
+    document.getElementById('calc-gold').value = Math.round(rub * 100);
 }
 
-// ==========================================
-// 8. КАСТОМНЫЙ АУДИОПЛЕЕР
-// ==========================================
 const audio = document.getElementById('audio-element');
 
 function playAudio(url, title, cover) {
-  if (!url || !audio) return;
-  
-  audio.src = url;
-  audio.play();
+    if (!url || !audio) return;
+    audio.src = url;
+    audio.play();
 
-  const pTitle = document.getElementById('player-title');
-  const pCover = document.getElementById('player-cover');
-  const pBar = document.getElementById('player-bar');
-  const pBtn = document.getElementById('player-play-btn');
-
-  if (pTitle) pTitle.innerText = title;
-  if (pCover) pCover.src = cover || 'https://via.placeholder.com/50/1c0508/ff2a55?text=Y';
-  if (pBar) pBar.classList.remove('hidden');
-  if (pBtn) pBtn.innerText = '⏸';
+    document.getElementById('player-title').innerText = title;
+    document.getElementById('player-cover').src = cover || 'https://via.placeholder.com/50/1c0508/ff2a55?text=Y';
+    document.getElementById('player-bar').classList.remove('hidden');
+    document.getElementById('player-play-btn').innerText = '⏸';
 }
 
 function togglePlayPause() {
-  if (!audio) return;
-  const pBtn = document.getElementById('player-play-btn');
-  if (audio.paused) {
-    audio.play();
-    if (pBtn) pBtn.innerText = '⏸';
-  } else {
-    audio.pause();
-    if (pBtn) pBtn.innerText = '▶️';
-  }
+    if (!audio) return;
+    if (audio.paused) {
+        audio.play();
+        document.getElementById('player-play-btn').innerText = '⏸';
+    } else {
+        audio.pause();
+        document.getElementById('player-play-btn').innerText = '▶️';
+    }
 }
 
 if (audio) {
-  audio.ontimeupdate = () => {
-    if (audio.duration) {
-      const pct = (audio.currentTime / audio.duration) * 100;
-      const progress = document.getElementById('player-progress');
-      if (progress) progress.style.width = pct + '%';
-    }
-  };
+    audio.ontimeupdate = () => {
+        if (audio.duration) {
+            const pct = (audio.currentTime / audio.duration) * 100;
+            const progress = document.getElementById('player-progress');
+            if (progress) progress.style.width = pct + '%';
+        }
+    };
 }
 
 function seekAudio(e) {
-  if (!audio || !audio.duration) return;
-  const container = e.currentTarget;
-  const rect = container.getBoundingClientRect();
-  const clickX = e.clientX - rect.left;
-  audio.currentTime = (clickX / rect.width) * audio.duration;
+    if (!audio || !audio.duration) return;
+    const container = e.currentTarget;
+    const rect = container.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    audio.currentTime = (clickX / rect.width) * audio.duration;
 }
 
-// Конвертация локальных файлов (картинки/MP3) в Base64 для Админки
 function convertFileToBase64(fileInput, hiddenInputId) {
-  const file = fileInput.files[0];
-  if (!file) return;
+    const file = fileInput.files[0];
+    if (!file) return;
 
-  const reader = new FileReader();
-  reader.onloadend = function () {
-    const hiddenElem = document.getElementById(hiddenInputId);
-    if (hiddenElem) hiddenElem.value = reader.result;
-  };
-  reader.readAsDataURL(file);
+    const reader = new FileReader();
+    reader.onloadend = function () {
+        document.getElementById(hiddenInputId).value = reader.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+function populateBoostSelect() {
+    const select = document.getElementById('boost-track-select');
+    if (select) {
+        select.innerHTML = allTracks.map(t => `<option value="${t.id}">${t.title} (${t.likes || 0} ❤️)</option>`).join('');
+    }
+}
+
+async function applyLikesBoost() {
+    const trackId = document.getElementById('boost-track-select').value;
+    const newLikes = parseInt(document.getElementById('boost-likes-count').value);
+
+    if (!trackId || isNaN(newLikes)) return alert('Укажите число');
+
+    await db.from('tracks').update({ likes: newLikes }).eq('id', trackId);
+    alert('Лайки обновлены!');
+    closeAdminModal();
+    loadTracks();
+}
+
+function handleSearch() {
+    const query = document.getElementById('search-input').value.toLowerCase();
+    const filtered = allTracks.filter(t => t.title.toLowerCase().includes(query));
+    renderTracks(filtered.filter(t => !t.is_upcoming), 'tracks-list');
+    renderTracks(filtered.filter(t => t.is_upcoming), 'upcoming-list');
+}
+
+async function deleteTrack(id) {
+    if (!confirm('Удалить трек?')) return;
+    await db.from('tracks').delete().eq('id', id);
+    loadTracks();
+}
+
+async function deleteNews(id) {
+    if (!confirm('Удалить новость?')) return;
+    await db.from('news').delete().eq('id', id);
+    loadNews();
+}
+
+async function handleTrackSubmit(e) {
+    e.preventDefault();
+    if (!isAdmin()) return;
+
+    const trackData = {
+        title: document.getElementById('track-title').value,
+        cover: document.getElementById('track-cover-data').value,
+        audio: document.getElementById('track-audio-data').value,
+        link: document.getElementById('track-link').value,
+        release_date: document.getElementById('track-date').value,
+        likes: parseInt(document.getElementById('track-initial-likes').value) || 0,
+        is_upcoming: document.getElementById('track-upcoming').checked
+    };
+
+    const { error } = await db.from('tracks').insert([trackData]);
+    if (!error) {
+        closeAdminModal();
+        loadTracks();
+    }
+}
+
+async function handleNewsSubmit(e) {
+    e.preventDefault();
+    if (!isAdmin()) return;
+
+    const newsData = {
+        text: document.getElementById('news-text').value,
+        image: document.getElementById('news-image-data').value,
+        date: new Date().toLocaleDateString('ru-RU')
+    };
+
+    const { error } = await db.from('news').insert([newsData]);
+    if (!error) {
+        closeAdminModal();
+        loadNews();
+    }
 }
