@@ -16,7 +16,7 @@
     </div>
 
     <div class="app-container">
-        <!-- Шапка -->
+        <!-- Шапка Профиля -->
         <header class="glass-header">
             <div class="profile-info">
                 <div class="avatar-glow">
@@ -35,59 +35,92 @@
             </button>
         </header>
 
-        <!-- Поиск -->
+        <!-- Поисковая строка -->
         <div class="search-box glass-card">
             <span class="search-icon">🔍</span>
-            <input type="text" id="search-input" placeholder="Поиск треков и релизов..." oninput="handleSearch()">
+            <input type="text" id="search-input" placeholder="Поиск по релизом и новостям..." oninput="handleSearch()">
         </div>
 
-        <!-- Переключатель Вкладок -->
-        <nav class="glass-tabs">
-            <button class="tab-btn active" onclick="switchTab('tracks')">🎵 Треки</button>
-            <button class="tab-btn" onclick="switchTab('news')">📰 Новости</button>
-            <button class="tab-btn" onclick="switchTab('stats')">📊 Инфо</button>
-        </nav>
+        <!-- ОСНОВНОЙ КОНТЕНТ (РАЗДЕЛЫ) -->
 
-        <!-- Вкладка: Треки -->
+        <!-- 1. Вкладка: Главная / Треки -->
         <main id="tab-tracks" class="tab-content active">
+            <h2 class="section-title">🎵 Релизы & Сниппеты</h2>
             <div id="tracks-list" class="cards-grid">
-                <div class="loading-spinner">Загрузка музыкального мира...</div>
+                <div class="loading-spinner">Загрузка музыки...</div>
             </div>
         </main>
 
-        <!-- Вкладка: Новости -->
+        <!-- 2. Вкладка: Новости -->
         <main id="tab-news" class="tab-content">
+            <h2 class="section-title">📰 Новости & Лента</h2>
             <div id="news-list" class="news-grid">
-                <div class="loading-spinner">Загрузка свежих новостей...</div>
+                <div class="loading-spinner">Загрузка новостей...</div>
             </div>
         </main>
 
-        <!-- Вкладка: Статистика -->
-        <main id="tab-stats" class="tab-content">
-            <div class="glass-card stats-card">
-                <h2>📈 Аналитика карточки</h2>
+        <!-- 3. Вкладка: Предстоящее (Upcoming) -->
+        <main id="tab-upcoming" class="tab-content">
+            <h2 class="section-title">🔥 Анонсы & Сниппеты</h2>
+            <div id="upcoming-list" class="cards-grid">
+                <div class="loading-spinner">Загрузка анонсов...</div>
+            </div>
+        </main>
+
+        <!-- 4. Вкладка: Информация / Профиль -->
+        <main id="tab-info" class="tab-content">
+            <div class="glass-card info-card">
+                <h2>👤 О художнике</h2>
+                <div class="artist-hero">
+                    <h3>YaRkUsIk <span class="blue-badge">✓</span></h3>
+                    <p>Официальная карточка музыканта в Telegram Mini App.</p>
+                </div>
+                
                 <div class="stats-grid">
                     <div class="stat-item">
                         <span class="stat-num" id="total-tracks-count">0</span>
-                        <span class="stat-label">Всего релизов</span>
+                        <span class="stat-label">Релизов</span>
                     </div>
                     <div class="stat-item">
                         <span class="stat-num" id="total-news-count">0</span>
                         <span class="stat-label">Новостей</span>
                     </div>
                 </div>
-                <div class="author-block">
-                    <p>Официальное приложение исполнителя <strong>YaRkUsIk</strong> <span class="blue-badge">✓</span></p>
+
+                <div class="info-links">
+                    <a href="https://t.me/yarkusik" target="_blank" class="glass-link-btn">💬 Telegram Канал</a>
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- Модальное Окно Админ-Панели -->
+    <!-- НИЖНЯЯ СТЕКЛЯННАЯ DOCK-ПАНЕЛЬ (iOS Navigation Dock) -->
+    <div class="dock-container">
+        <nav class="glass-dock">
+            <button class="dock-btn active" onclick="switchTab('tracks')">
+                <span class="dock-icon">🎵</span>
+                <span class="dock-label">Треки</span>
+            </button>
+            <button class="dock-btn" onclick="switchTab('news')">
+                <span class="dock-icon">📰</span>
+                <span class="dock-label">Новости</span>
+            </button>
+            <button class="dock-btn" onclick="switchTab('upcoming')">
+                <span class="dock-icon">🔥</span>
+                <span class="dock-label">Анонсы</span>
+            </button>
+            <button class="dock-btn" onclick="switchTab('info')">
+                <span class="dock-icon">👤</span>
+                <span class="dock-label">Инфо</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- Модальное Окно Админки -->
     <div id="admin-modal" class="glass-modal">
         <div class="modal-content glass-card">
             <div class="modal-header">
-                <h2>Управление контентом</h2>
+                <h2>Панель администрирования</h2>
                 <button class="close-btn" onclick="closeAdminModal()">✕</button>
             </div>
             
@@ -100,20 +133,20 @@
             <form id="form-track" class="admin-form active" onsubmit="handleTrackSubmit(event)">
                 <input type="text" id="track-title" placeholder="Название трека" required>
                 <input type="url" id="track-cover" placeholder="Ссылка на обложку (URL)" required>
-                <input type="url" id="track-audio" placeholder="Прямая ссылка на MP3/Аудио (необязательно)">
-                <input type="url" id="track-link" placeholder="Ссылка на Я.Музыку / VK / Стриминг">
-                <input type="text" id="track-date" placeholder="Дата релиза (например: 25.10.2026)">
+                <input type="url" id="track-audio" placeholder="Прямая ссылка на MP3/Аудио">
+                <input type="url" id="track-link" placeholder="Ссылка на карточку/стриминг">
+                <input type="text" id="track-date" placeholder="Дата релиза (напр: 25.10.2026)">
                 <label class="checkbox-label">
-                    <input type="checkbox" id="track-upcoming"> Это эксклюзивный сниппет
+                    <input type="checkbox" id="track-upcoming"> Пометить как Анонс / Сниппет
                 </label>
-                <button type="submit" class="apple-btn">Опубликовать трек от YaRkUsIk ☑️</button>
+                <button type="submit" class="apple-btn">Опубликовать от YaRkUsIk ☑️</button>
             </form>
 
             <!-- Форма Новостей -->
             <form id="form-news" class="admin-form" onsubmit="handleNewsSubmit(event)">
                 <textarea id="news-text" placeholder="Текст новости..." rows="4" required></textarea>
                 <input type="url" id="news-image" placeholder="Ссылка на картинку (URL)">
-                <button type="submit" class="apple-btn">Опубликовать новость от YaRkUsIk ☑️</button>
+                <button type="submit" class="apple-btn">Опубликовать от YaRkUsIk ☑️</button>
             </form>
         </div>
     </div>
