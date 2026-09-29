@@ -3,21 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>YaRkUsIk Mini App</title>
+    <title>YaRkUsIk Mini App — Элитное Пространство</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="style.css?v=6">
-    <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=7">
+    <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- Фоновые анимированные рубиновые пятна -->
+    <!-- Фоновые кинематографичные рубиновые переливы -->
     <div class="background-blobs">
         <div class="blob blob-1"></div>
         <div class="blob blob-2"></div>
         <div class="blob blob-3"></div>
     </div>
 
+    <!-- Система Тост-Уведомлений -->
+    <div id="toast-container" class="toast-container"></div>
+
     <div class="app-container">
-        <!-- Шапка Профиля -->
+        <!-- Премиальная Шапка ЯрКуСиК -->
         <header class="glass-header">
             <div class="profile-info" onclick="switchTab('info')">
                 <div class="avatar-glow">
@@ -26,170 +29,197 @@
                 <div>
                     <div class="title-with-badge">
                         <h1 id="user-name">Гость</h1>
-                        <span id="verified-badge" class="blue-badge" style="display: none;" title="Подтвержденный профиль YaRkUsIk">✓</span>
+                        <span id="verified-badge" class="blue-badge" style="display: none;" title="Официальный верифицированный профиль">✓</span>
                     </div>
-                    <span class="badge" id="role-badge">Слушатель</span>
+                    <span class="badge" id="role-badge">YaRkUsIk Member</span>
                 </div>
             </div>
             <div class="header-right">
-                <div class="balance-badge" onclick="switchTab('earn')">
-                    🟡 <span id="header-balance">0</span> Gold
+                <div class="balance-badge" onclick="switchTab('earn')" title="Ваш баланс ЯрКуСиК">
+                    🟡 <span id="header-balance">0</span> <span class="currency-label">ЯрКуСиК</span>
                 </div>
-                <button id="admin-badge" class="admin-btn-trigger" style="display: none;" onclick="openAdminModal()">
+                <button id="admin-badge" class="admin-btn-trigger" style="display: none;" onclick="openAdminModal()" title="Панель Создателя">
                     ⚡
                 </button>
             </div>
         </header>
 
-        <!-- Поисковая строка -->
-        <div class="search-box glass-card">
+        <!-- Универсальная поисковая панель с фильтрами -->
+        <div id="global-search-box" class="search-box glass-card">
             <span class="search-icon">🔍</span>
-            <input type="text" id="search-input" placeholder="Поиск релизов и новостей..." oninput="handleSearch()">
+            <input type="text" id="search-input" placeholder="Поиск музыки, новостей, резидентов..." oninput="handleSearch()">
         </div>
 
-        <!-- ОСНОВНОЙ КОНТЕНТ -->
+        <!-- ОСНОВНЫЕ РАЗДЕЛЫ ПРИЛОЖЕНИЯ -->
 
-        <!-- 1. Вкладка: Главная / Треки -->
+        <!-- 1. Главная: Релизы & Треки -->
         <main id="tab-tracks" class="tab-content active">
-            <!-- Закрепленная новость -->
-            <div id="latest-news-banner" class="featured-news-card glass-card" style="display: none; margin-bottom: 14px; padding: 14px;">
-                <div class="featured-tag" style="font-size: 11px; font-weight: 700; color: #ff2a55; margin-bottom: 4px;">📌 ПОСЛЕДНЯЯ НОВОСТЬ</div>
+            <!-- Закрепленная новость от Создателя -->
+            <div id="latest-news-banner" class="featured-news-card glass-card" style="display: none;">
+                <div class="featured-tag">📌 ГЛАВНЫЙ АНОНС ЯрКуСиК</div>
                 <div id="latest-news-content"></div>
             </div>
 
-            <h2 class="section-title">🎵 Все релизы</h2>
+            <div class="section-header-row">
+                <h2 class="section-title">🎵 Релизы ЯрКуСиК</h2>
+                <button class="filter-switch-btn" onclick="toggleUpcomingTracks()">🔥 Pre-Save Анонсы</button>
+            </div>
+            
+            <div id="upcoming-container-wrap" style="display: none; margin-bottom: 16px;">
+                <h3 style="font-size: 14px; margin-bottom: 8px; color: #ff9500; font-weight: 700;">🚀 Эксклюзивные Пресейвы</h3>
+                <div id="upcoming-list" class="cards-grid"></div>
+            </div>
+
             <div id="tracks-list" class="cards-grid">
-                <div class="loading-spinner">Загрузка музыки...</div>
+                <div class="loading-spinner">Загрузка музыкального вайба...</div>
             </div>
         </main>
 
-        <!-- 2. Вкладка: Новости -->
+        <!-- 2. Новости & Медиа-лента -->
         <main id="tab-news" class="tab-content">
-            <button class="btn-back" onclick="switchTab('tracks')">← Назад</button>
-            <h2 class="section-title">📰 Новости & Лента</h2>
+            <button class="btn-back" onclick="switchTab('tracks')">← Назад в меню</button>
+            <h2 class="section-title">📰 Лента Новостей ЯрКуСиК</h2>
             <div id="news-list" class="news-grid">
-                <div class="loading-spinner">Загрузка новостей...</div>
+                <div class="loading-spinner">Загрузка ленты...</div>
             </div>
         </main>
 
-        <!-- 3. Вкладка: Pre-Save & Сниппеты -->
-        <main id="tab-upcoming" class="tab-content">
-            <button class="btn-back" onclick="switchTab('tracks')">← Назад</button>
-            <h2 class="section-title">🔥 Эксклюзивные Анонсы</h2>
-            <div id="upcoming-list" class="cards-grid">
-                <div class="loading-spinner">Загрузка анонсов...</div>
-            </div>
-        </main>
-
-        <!-- 4. Вкладка: Заработать UX Gold -->
-        <main id="tab-earn" class="tab-content">
-            <button class="btn-back" onclick="switchTab('tracks')">← Назад</button>
-            <h2 class="section-title">💰 Заработать UX Gold</h2>
-            <div class="glass-card info-card" style="margin-bottom: 14px; padding: 14px;">
-                <p style="font-size: 13px; color: rgba(255,255,255,0.8);">Выполняй задания ниже, зарабатывай **UX Gold** и обменивай их в калькуляторе!</p>
-            </div>
-            <div id="tasks-list" class="cards-grid"></div>
-        </main>
-
-        <!-- 5. Вкладка: Магазин Мерча -->
-        <main id="tab-shop" class="tab-content">
-            <button class="btn-back" onclick="switchTab('tracks')">← Назад</button>
-            <h2 class="section-title">🛒 Магазин Мерча</h2>
-            <div class="cards-grid">
-                <div class="glass-card track-card" style="padding: 16px;">
-                    <div class="track-top">
-                        <div style="width: 50px; height: 50px; background: rgba(255,42,85,0.2); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px;">👕</div>
-                        <div class="track-details">
-                            <div class="track-title">Худи YaRkUsIk Official</div>
-                            <p style="font-size: 12px; color: rgba(255,255,255,0.6);">Лимитированная коллекция</p>
-                        </div>
-                    </div>
-                    <button class="crimson-btn" onclick="buyShopItem('Худи YaRkUsIk', 10000)">Купить за 10 000 Gold</button>
-                </div>
-
-                <div class="glass-card track-card" style="padding: 16px;">
-                    <div class="track-top">
-                        <div style="width: 50px; height: 50px; background: rgba(255,42,85,0.2); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px;">🎟️</div>
-                        <div class="track-details">
-                            <div class="track-title">VIP-Билет на концерт</div>
-                            <p style="font-size: 12px; color: rgba(255,255,255,0.6);">Проходка за кулисы + мерч</p>
-                        </div>
-                    </div>
-                    <button class="crimson-btn" onclick="buyShopItem('VIP-Билет', 25000)">Купить за 25 000 Gold</button>
-                </div>
-            </div>
-        </main>
-
-        <!-- 6. Вкладка: Кликер YKSI-Tap -->
+        <!-- 3. Интерактивный Кликер ЯрКуСиК (YKSI-Tap) -->
         <main id="tab-tap" class="tab-content">
-            <button class="btn-back" onclick="switchTab('tracks')">← Назад</button>
-            <h2 class="section-title">⚡ YKSI-Tap Кликер</h2>
-            <div class="glass-card" style="text-align: center; padding: 30px 20px;">
-                <div style="font-size: 13px; color: rgba(255,255,255,0.7); margin-bottom: 6px;">Твой баланс UX Gold:</div>
-                <div style="font-size: 28px; font-weight: 800; color: #ffb800; margin-bottom: 24px;">
-                    🟡 <span id="tap-balance">0</span>
+            <button class="btn-back" onclick="switchTab('tracks')">← Назад в меню</button>
+            <div class="tap-header-box glass-card">
+                <h2>⚡ Энергия ЯрКуСиК</h2>
+                <p>Тапай по фирменному сердцу, заряжай вайб и зарабатывай валюту (+0.0005 за тап)</p>
+                <div class="tap-balance-display">
+                    <span id="tap-balance-num">0.0000</span> <small>ЯрКуСиК</small>
                 </div>
-                
-                <div id="tap-target" onclick="handleYarkuTap(event)" style="width: 130px; height: 130px; background: linear-gradient(135deg, #ff2a55, #800020); border-radius: 50%; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 55px; cursor: pointer; box-shadow: 0 0 30px rgba(255,42,85,0.6); transition: transform 0.05s ease; user-select: none;">
-                    ⚡
+            </div>
+
+            <div class="clicker-arena">
+                <div class="clicker-heart-container" id="clicker-button" onclick="handleTap(event)">
+                    <div class="clicker-glow-circle"></div>
+                    <div class="clicker-heart-icon">💖</div>
+                    <div class="clicker-brand-label">YaRkUsIk</div>
                 </div>
-                <p style="font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 20px;">Тапай по значку, чтобы фармить монеты!</p>
+                <div id="floating-scores-container"></div>
+            </div>
+
+            <div class="glass-card" style="margin-top: 16px; padding: 14px;">
+                <h3 style="font-size: 13px; margin-bottom: 8px; font-weight: 700;">📜 Журнал начислений энергии</h3>
+                <div id="tap-history-list" style="font-size: 11px; color: rgba(255,255,255,0.6); max-height: 120px; overflow-y: auto;">
+                    Загрузка истории тапов...
+                </div>
             </div>
         </main>
 
-        <!-- 7. Вкладка: Подарки (НОВОЕ) -->
+        <!-- 4. Подарки, NFT и Коллекция -->
         <main id="tab-gifts" class="tab-content">
-            <button class="btn-back" onclick="switchTab('tracks')">← Назад</button>
-            <h2 class="section-title">🎁 Каталог подарков</h2>
-            <div id="gifts-grid" class="cards-grid">
-                <div class="loading-spinner">Загрузка подарков...</div>
+            <button class="btn-back" onclick="switchTab('tracks')">← Назад в меню</button>
+            <div class="admin-tabs" style="margin-bottom: 14px;">
+                <button class="admin-tab-btn active" onclick="switchGiftsSubTab('catalog')">🎁 Каталог</button>
+                <button class="admin-tab-btn" onclick="switchGiftsSubTab('nft')">💎 NFT-Артефакты</button>
+                <button class="admin-tab-btn" onclick="switchGiftsSubTab('my')">🎒 Моя Коллекция</button>
+            </div>
+
+            <div id="gifts-sub-catalog" class="gifts-sub-content active">
+                <h2 class="section-title">Каталог подарков ЯрКуСиК</h2>
+                <div id="catalog-gifts-list" class="cards-grid">
+                    <div class="loading-spinner">Загрузка каталога...</div>
+                </div>
+            </div>
+
+            <div id="gifts-sub-nft" class="gifts-sub-content">
+                <h2 class="section-title">💎 Редкие Коллекционные NFT (от 100 000 ЯрКуСиК)</h2>
+                <div id="nft-gifts-list" class="cards-grid">
+                    <div class="loading-spinner">Загрузка NFT...</div>
+                </div>
+            </div>
+
+            <div id="gifts-sub-my" class="gifts-sub-content">
+                <h2 class="section-title">🎒 Ваши подарки & Мерч</h2>
+                <div id="my-gifts-list" class="cards-grid">
+                    <div class="loading-spinner">Загрузка вашей коллекции...</div>
+                </div>
             </div>
         </main>
 
-        <!-- 8. Вкладка: Инвентарь / Коллекция (НОВОЕ) -->
-        <main id="tab-inventory" class="tab-content">
-            <button class="btn-back" onclick="switchTab('tracks')">← Назад</button>
-            <h2 class="section-title">🎒 Моя коллекция</h2>
-            <div id="inventory-grid" class="cards-grid">
-                <div class="loading-spinner">Загрузка инвентаря...</div>
-            </div>
-        </main>
-
-        <!-- 9. Вкладка: Розыгрыши (НОВОЕ) -->
+        <!-- 5. Розыгрыши Сообщества -->
         <main id="tab-giveaways" class="tab-content">
-            <button class="btn-back" onclick="switchTab('tracks')">← Назад</button>
-            <h2 class="section-title">🎉 Розыгрыши</h2>
+            <button class="btn-back" onclick="switchTab('tracks')">← Назад в меню</button>
+            <h2 class="section-title">🎟️ Розыгрыши ЯрКуСиК</h2>
+            <div class="glass-card info-card" style="margin-bottom: 14px;">
+                <p style="font-size: 13px; color: rgba(255,255,255,0.8);">Участвуй в эксклюзивных розыгрышах ценной валюты и подарков. Честный выбор победителей сервером!</p>
+            </div>
             <div id="giveaways-list" class="cards-grid">
                 <div class="loading-spinner">Загрузка розыгрышей...</div>
             </div>
         </main>
 
-        <!-- 10. Вкладка: Профиль & Конвертер -->
+        <!-- 6. Участники & Приватные Чаты -->
+        <main id="tab-community" class="tab-content">
+            <button class="btn-back" onclick="switchTab('tracks')">← Назад в меню</button>
+            <div class="admin-tabs" style="margin-bottom: 14px;">
+                <button class="admin-tab-btn active" onclick="switchCommSubTab('members')">👥 Участники</button>
+                <button class="admin-tab-btn" onclick="switchCommSubTab('chats')">💬 Сообщения</button>
+            </div>
+
+            <div id="comm-sub-members" class="comm-sub-content active">
+                <h2 class="section-title">👥 Резиденты ЯрКуСиК</h2>
+                <div id="members-list" class="cards-grid">
+                    <div class="loading-spinner">Загрузка резидентов...</div>
+                </div>
+            </div>
+
+            <div id="comm-sub-chats" class="comm-sub-content">
+                <h2 class="section-title">💬 Личные Диалоги</h2>
+                <div id="conversations-list" class="cards-grid">
+                    <div class="loading-spinner">Загрузка диалогов...</div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 7. Задания & Заработок -->
+        <main id="tab-earn" class="tab-content">
+            <button class="btn-back" onclick="switchTab('tracks')">← Назад в меню</button>
+            <h2 class="section-title">💰 Заработать ЯрКуСиК</h2>
+            <div class="glass-card info-card" style="margin-bottom: 14px;">
+                <p style="font-size: 13px; color: rgba(255,255,255,0.8);">Выполняй официальные задания сообщества и пополняй свой баланс валюты!</p>
+            </div>
+            <div id="tasks-list" class="cards-grid"></div>
+        </main>
+
+        <!-- 8. Профиль & Конвертер Валют -->
         <main id="tab-info" class="tab-content">
-            <button class="btn-back" onclick="switchTab('tracks')">← Назад</button>
-            <div class="glass-card info-card" style="padding: 16px;">
-                <div class="profile-hero" style="text-align: center;">
+            <button class="btn-back" onclick="switchTab('tracks')">← Назад в меню</button>
+            <div class="glass-card info-card">
+                <div class="profile-hero">
                     <img id="profile-hero-avatar" src="https://via.placeholder.com/100/1c0508/ff2a55?text=Y" class="hero-avatar">
                     <h2 class="hero-name"><span id="profile-hero-name">Гость</span> <span id="hero-badge" class="blue-badge" style="display:none;">✓</span></h2>
-                    <p class="hero-sub" id="profile-hero-status">Слушатель</p>
+                    <p class="hero-sub" id="profile-hero-status">YaRkUsIk Creator</p>
+                </div>
+
+                <!-- Редактирование Био / Статуса -->
+                <div class="bio-box" style="margin: 14px 0;">
+                    <textarea id="profile-bio-input" placeholder="Ваш личный статус в ЯрКуСиК..." rows="2" maxlength="150" style="width: 100%; font-size: 12px; resize: none;"></textarea>
+                    <button class="crimson-btn" style="margin-top: 6px; padding: 8px; font-size: 11px;" onclick="saveUserBio()">💾 Сохранить статус</button>
                 </div>
                 
                 <div class="stats-grid">
                     <div class="stat-item">
                         <span class="stat-num" id="prof-balance">0</span>
-                        <span class="stat-label">UX Gold</span>
+                        <span class="stat-label">ЯрКуСиК</span>
                     </div>
                     <div class="stat-item">
                         <span class="stat-num" id="total-tracks-count">0</span>
-                        <span class="stat-label">Всего треков</span>
+                        <span class="stat-label">Релизов</span>
                     </div>
                 </div>
 
-                <!-- Конвертер Валют -->
+                <!-- Конвертер -->
                 <div class="converter-box">
-                    <h3 style="font-size: 14px; margin-bottom: 8px;">🧮 Конвертер (100 Gold = 1 ₽)</h3>
+                    <h3 style="font-size: 13px; margin-bottom: 8px; font-weight: 700;">🧮 Конвертер Валюты (100 ЯрКуСиК = 1 ₽)</h3>
                     <div class="calc-row">
-                        <input type="number" id="calc-gold" placeholder="UX Gold" oninput="convertFromGold()">
+                        <input type="number" id="calc-gold" placeholder="ЯрКуСиК" oninput="convertFromGold()">
                         <span>⇄</span>
                         <input type="number" id="calc-rub" placeholder="Рубли (₽)" oninput="convertFromRub()">
                     </div>
@@ -202,62 +232,67 @@
         </main>
     </div>
 
-    <!-- НИЖНЯЯ ПЛАВАЮЩАЯ DOCK-ПАНЕЛЬ (Обновлена с новыми вкладками) -->
-    <div class="dock-container">
-        <nav class="glass-dock">
-            <button class="dock-btn active" onclick="switchTab('tracks')">
-                <span class="dock-icon">🎵</span>
-                <span class="dock-label">Главная</span>
-            </button>
-            <button class="dock-btn" onclick="switchTab('gifts')">
-                <span class="dock-icon">🎁</span>
-                <span class="dock-label">Подарки</span>
-            </button>
-            <button class="dock-btn" onclick="switchTab('inventory')">
-                <span class="dock-icon">🎒</span>
-                <span class="dock-label">Инвентарь</span>
-            </button>
-            <button class="dock-btn" onclick="switchTab('giveaways')">
-                <span class="dock-icon">🎉</span>
-                <span class="dock-label">Розыгрыши</span>
-            </button>
-            <button class="dock-btn" onclick="switchTab('earn')">
-                <span class="dock-icon">💰</span>
-                <span class="dock-label">Заработать</span>
-            </button>
-            <button class="dock-btn" onclick="switchTab('tap')">
-                <span class="dock-icon">⚡</span>
-                <span class="dock-label">Tap</span>
-            </button>
-        </nav>
-    </div>
-
-    <!-- Модальное окно отправки подарка (НОВОЕ) -->
-    <div id="send-gift-modal" class="glass-modal" style="display:none;">
+    <!-- Модальное окно просмотра профиля -->
+    <div id="user-profile-modal" class="glass-modal">
         <div class="modal-content glass-card">
             <div class="modal-header">
-                <h2 id="modal-gift-title">Отправить подарок</h2>
-                <button class="close-btn" onclick="closeSendModal()">✕</button>
+                <h2>👤 Профиль резидента</h2>
+                <button class="close-btn" onclick="closeUserProfileModal()">✕</button>
             </div>
-            <p style="font-size: 13px; color: rgba(255,255,255,0.7); margin: 10px 0;" id="modal-gift-price"></p>
-            <input type="number" id="recipient-telegram-id" class="admin-select" placeholder="Telegram ID получателя" style="width:150px; padding:10px; margin:10px 0; background:#111; color:#fff; border:1px solid #444; border-radius:8px;">
-            <br>
-            <button class="crimson-btn" onclick="confirmSendGift()" style="margin-top:10px;">Подарить 🚀</button>
+            <div id="modal-user-details" style="text-align: center; margin-bottom: 14px;"></div>
+            <div style="display: flex; gap: 8px;">
+                <button class="crimson-btn" onclick="openSendGiftModalFromProfile()">🎁 Подарить</button>
+                <button class="presave-btn" onclick="openDirectChat()">💬 Написать</button>
+            </div>
+            <div style="display: flex; gap: 8px; margin-top: 8px;">
+                <button class="listen-link" style="flex:1; text-align:center;" onclick="reportUserModal()">⚠️ Жалоба</button>
+                <button class="listen-link" style="flex:1; text-align:center; background: rgba(255,0,0,0.2); color:#ff6b6b;" onclick="blockUserModal()">🚫 Блок</button>
+            </div>
         </div>
     </div>
 
-    <!-- Модальное Окно Админки -->
-    <div id="admin-modal" class="glass-modal">
+    <!-- Модальное окно отправки подарка -->
+    <div id="send-gift-modal" class="glass-modal">
         <div class="modal-content glass-card">
             <div class="modal-header">
-                <h2>⚡ Панель Админа</h2>
+                <h2>🎁 Подарить предмет</h2>
+                <button class="close-btn" onclick="document.getElementById('send-gift-modal').style.display='none'">✕</button>
+            </div>
+            <p id="send-gift-target-label" style="font-size: 12px; margin-bottom: 10px; color: #ffb800;"></p>
+            <div id="send-gift-selection-list" class="cards-grid" style="max-height: 250px; overflow-y: auto; margin-bottom: 14px;"></div>
+        </div>
+    </div>
+
+    <!-- Модальное окно чата -->
+    <div id="chat-modal" class="glass-modal">
+        <div class="modal-content glass-card" style="max-height: 85vh; display: flex; flex-direction: column;">
+            <div class="modal-header">
+                <h2 id="chat-modal-title">💬 Диалог ЯрКуСиК</h2>
+                <button class="close-btn" onclick="closeChatModal()">✕</button>
+            </div>
+            <div id="chat-messages-container" style="flex: 1; overflow-y: auto; max-height: 350px; padding: 8px; display: flex; flex-direction: column; gap: 8px; background: rgba(0,0,0,0.25); border-radius: 14px; margin-bottom: 10px;"></div>
+            <div style="display: flex; gap: 8px;">
+                <input type="text" id="chat-input-message" placeholder="Введите сообщение..." style="flex: 1;" onkeydown="if(event.key==='Enter') sendChatMessage()">
+                <button class="crimson-btn" style="width: auto; padding: 10px 16px;" onclick="sendChatMessage()">Отправить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное Окно Админки ЯрКуСиК -->
+    <div id="admin-modal" class="glass-modal">
+        <div class="modal-content glass-card" style="max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h2>⚡ Панель Создателя ЯрКуСиК</h2>
                 <button class="close-btn" onclick="closeAdminModal()">✕</button>
             </div>
             
-            <div class="admin-tabs">
+            <div class="admin-tabs" style="flex-wrap: wrap;">
                 <button class="admin-tab-btn active" onclick="switchAdminTab('add-track')">+ Трек</button>
                 <button class="admin-tab-btn" onclick="switchAdminTab('add-news')">+ Новость</button>
-                <button class="admin-tab-btn" onclick="switchAdminTab('edit-likes')">❤️ Накрутка</button>
+                <button class="admin-tab-btn" onclick="switchAdminTab('edit-likes')">❤️ Лайки</button>
+                <button class="admin-tab-btn" onclick="switchAdminTab('admin-gifts')">🎁 Подарки</button>
+                <button class="admin-tab-btn" onclick="switchAdminTab('admin-giveaways')">🎟️ Розыгрыш</button>
+                <button class="admin-tab-btn" onclick="switchAdminTab('admin-users')">👑 Баланс</button>
             </div>
 
             <!-- Форма Трека -->
@@ -277,20 +312,20 @@
                 <input type="text" id="track-date" placeholder="Дата релиза">
                 <input type="number" id="track-initial-likes" placeholder="Стартовые лайки" value="0">
                 <label class="checkbox-label">
-                    <input type="checkbox" id="track-upcoming"> Сделать Анонсом (Pre-Save)
+                    <input type="checkbox" id="track-upcoming"> Сделать Пресейв-Анонсом
                 </label>
-                <button type="submit" class="crimson-btn">Опубликовать от YaRkUsIk ☑️</button>
+                <button type="submit" class="crimson-btn">Опубликовать релиз ☑️</button>
             </form>
 
             <!-- Форма Новостей -->
             <form id="form-news" class="admin-form" onsubmit="handleNewsSubmit(event)">
-                <textarea id="news-text" placeholder="Текст новости..." rows="4" required></textarea>
+                <textarea id="news-text" placeholder="Текст новости ЯрКуСиК..." rows="4" required></textarea>
                 <label class="file-upload-label">
                     <span>🖼️ Картинка (с устройства):</span>
                     <input type="file" id="news-image-file" accept="image/*" onchange="convertFileToBase64(this, 'news-image-data')">
                     <input type="hidden" id="news-image-data">
                 </label>
-                <button type="submit" class="crimson-btn">Опубликовать от YaRkUsIk ☑️</button>
+                <button type="submit" class="crimson-btn">Опубликовать новость ☑️</button>
             </form>
 
             <!-- Накрутка Лайков -->
@@ -299,7 +334,78 @@
                 <input type="number" id="boost-likes-count" placeholder="Новое число лайков">
                 <button type="button" class="crimson-btn" onclick="applyLikesBoost()">Установить лайки 🔥</button>
             </div>
+
+            <!-- Управление подарками -->
+            <div id="form-gifts-admin" class="admin-form">
+                <h3 style="font-size: 13px;">Создать подарок / NFT</h3>
+                <input type="text" id="adm-gift-name" placeholder="Название подарка">
+                <input type="text" id="adm-gift-desc" placeholder="Описание">
+                <input type="number" id="adm-gift-price" placeholder="Цена в ЯрКуСиК">
+                <input type="text" id="adm-gift-img" placeholder="Иконка или URL (🧸)">
+                <input type="text" id="adm-gift-model" placeholder="Ссылка на .glb/.gltf (опционально 3D)">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="adm-gift-is-nft"> Редкий NFT-артефакт
+                </label>
+                <button type="button" class="crimson-btn" onclick="adminCreateGift()">Создать подарок 🎁</button>
+            </div>
+
+            <!-- Управление розыгрышами -->
+            <div id="form-giveaways-admin" class="admin-form">
+                <h3 style="font-size: 13px;">Создать розыгрыш</h3>
+                <input type="text" id="adm-gw-title" placeholder="Название розыгрыша">
+                <textarea id="adm-gw-desc" placeholder="Условия и описание..." rows="2"></textarea>
+                <input type="number" id="adm-gw-prize-gold" placeholder="Приз в ЯрКуСиК (0 если подарок)" value="0">
+                <input type="number" id="adm-gw-cost" placeholder="Стоимость участия (0 бесплатно)" value="0">
+                <input type="text" id="adm-gw-end" placeholder="Дата окончания (например: 15.10.2026)">
+                <button type="button" class="crimson-btn" onclick="adminCreateGiveaway()">Запустить розыгрыш 🎟️</button>
+            </div>
+
+            <!-- Выдача валюты -->
+            <div id="form-users-admin" class="admin-form">
+                <h3 style="font-size: 13px;">Коррекция баланса резидента</h3>
+                <input type="number" id="adm-user-tg-id" placeholder="Telegram ID пользователя">
+                <input type="number" id="adm-user-amount" placeholder="Сумма ЯрКуСиК (+ или -)">
+                <button type="button" class="crimson-btn" onclick="adminAdjustBalance()">Корректировать баланс 🟡</button>
+            </div>
         </div>
+    </div>
+
+    <!-- Премиальная Нижняя Dock-панель -->
+    <div class="dock-container">
+        <nav class="glass-dock">
+            <button class="dock-btn active" onclick="switchTab('tracks')">
+                <span class="dock-icon">🎵</span>
+                <span class="dock-label">Музыка</span>
+            </button>
+            <button class="dock-btn" onclick="switchTab('news')">
+                <span class="dock-icon">📰</span>
+                <span class="dock-label">Новости</span>
+            </button>
+            <button class="dock-btn" onclick="switchTab('tap')">
+                <span class="dock-icon">⚡</span>
+                <span class="dock-label">Кликер</span>
+            </button>
+            <button class="dock-btn" onclick="switchTab('gifts')">
+                <span class="dock-icon">🎁</span>
+                <span class="dock-label">Подарки</span>
+            </button>
+            <button class="dock-btn" onclick="switchTab('giveaways')">
+                <span class="dock-icon">🎟️</span>
+                <span class="dock-label">Розыгрыши</span>
+            </button>
+            <button class="dock-btn" onclick="switchTab('community')">
+                <span class="dock-icon">👥</span>
+                <span class="dock-label">Общение</span>
+            </button>
+            <button class="dock-btn" onclick="switchTab('earn')">
+                <span class="dock-icon">💰</span>
+                <span class="dock-label">Заработок</span>
+            </button>
+            <button class="dock-btn" onclick="switchTab('info')">
+                <span class="dock-icon">👤</span>
+                <span class="dock-label">Профиль</span>
+            </button>
+        </nav>
     </div>
 
     <!-- Аудиоплеер -->
@@ -320,6 +426,6 @@
     <audio id="audio-element"></audio>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="app.js?v=6"></script>
+    <script src="app.js?v=7"></script>
 </body>
 </html>
